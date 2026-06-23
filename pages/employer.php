@@ -13,11 +13,12 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_job'])) {
+if (isset($_POST['update_job'])) {
+    // 1. Get the Job ID and the Employer ID
     $jobId = $_POST['update_job_id'];
-    $employerId = $_SESSION['user_id'];
-    
-    // Prepare the data array
+    $employerId = $_SESSION['user_id']; // Ensure session is started
+
+    // 2. Prepare the data array to match what your updateJob method expects
     $data = [
         'title'           => $_POST['title'],
         'description'     => $_POST['description'],
@@ -28,13 +29,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_job'])) {
         'location'        => $_POST['location']
     ];
 
-    // Use your existing class method
+    // 3. Call the class method
     if (EmployerClass::updateJob($jobId, $employerId, $data)) {
-        // Redirect to prevent form resubmission on refresh
-        header("Location: employer.php?tab=manageJobs&status=success");
-        exit;
+        // Success: Refresh the page to show updated data
+        header("Location: " . $_SERVER['PHP_SELF'] . "?success=1");
+        exit();
     } else {
-        $errorMessage = "Failed to update job.";
+        $error = "Failed to update job.";
     }
 }
 
@@ -414,7 +415,7 @@ $totalPages = ceil($totalJobs / $limit);
                         </div>
                     </form>
 
-<div class="table-responsive">
+                  <div class="table-responsive">
     <table class="table table-hover align-middle">
         <thead>
             <tr>
@@ -437,9 +438,13 @@ $totalPages = ceil($totalJobs / $limit);
             <tr>
                 <td>
                     <div class="fw-bold text-dark"><?= htmlspecialchars($job['JobTitle']) ?></div>
-                    <small class="text-muted">Status: <span class="<?= $statusClass ?> fw-bold"><?= htmlspecialchars($job['Status']) ?></span></small>
+                    <small class="text-muted">
+                        Status: <span class="<?= $statusClass ?> fw-bold"><?= htmlspecialchars($job['Status']) ?></span>
+                    </small>
                 </td>
-                <td><span class="badge bg-secondary-subtle text-secondary"><?= htmlspecialchars($job['ExperienceLevel']) ?></span></td>
+                <td>
+                    <span class="badge bg-secondary-subtle text-secondary"><?= htmlspecialchars($job['ExperienceLevel']) ?></span>
+                </td>
                 <td>
                     <div><?= htmlspecialchars($job['JobType']) ?></div>
                     <small class="text-muted"><?= htmlspecialchars($job['WorkSetup']) ?></small>
@@ -448,75 +453,96 @@ $totalPages = ceil($totalJobs / $limit);
                 <td><?= htmlspecialchars($job['Location']) ?></td>
                 <td>
                     <div class="d-flex gap-2">
-                        <a href="job-details.php?id=<?= $job['JobID'] ?>" class="btn btn-sm btn-outline-primary"><i class="fa fa-eye"></i></a>
-                        
-                        <form method="POST" onsubmit="return confirm('Delete this job?');">
+                        <a href="job-details.php?id=<?= $job['JobID'] ?>" class="btn btn-sm btn-outline-primary">
+                            <i class="fa fa-eye"></i>
+                        </a>
+                        <form method="POST" onsubmit="return confirm('Are you sure you want to delete this job?');" class="d-inline">
                             <input type="hidden" name="delete_job_id" value="<?= $job['JobID'] ?>">
-                            <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fa fa-trash"></i></button>
+                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                <i class="fa fa-trash"></i>
+                            </button>
                         </form>
 
-                        <button type="button" class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#editModal<?= $job['JobID'] ?>">
+                        <button type="button" class="btn btn-sm btn-outline-warning" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#editModal<?= $job['JobID'] ?>">
                             <i class="fa fa-edit"></i>
                         </button>
                     </div>
-
-                    <div class="modal fade" id="editModal<?= $job['JobID'] ?>" tabindex="-1">
-                        <div class="modal-dialog">
-                            <form method="POST">
-                                <div class="modal-content">
-                                    <div class="modal-header"><h5 class="modal-title">Edit: <?= htmlspecialchars($job['JobTitle']) ?></h5></div>
-                                    <div class="modal-body text-start">
-                                        <input type="hidden" name="update_job_id" value="<?= $job['JobID'] ?>">
-                                        
-                                        <div class="mb-2"><label class="fw-bold">Title</label><input type="text" name="title" class="form-control" value="<?= htmlspecialchars($job['JobTitle']) ?>" required></div>
-                                        <div class="mb-2"><label class="fw-bold">Description</label><textarea name="description" class="form-control" rows="3"><?= htmlspecialchars($job['Description']) ?></textarea></div>
-                                        <div class="mb-2"><label class="fw-bold">Salary (PHP)</label><input type="number" name="salary" class="form-control" value="<?= (int)$job['Salary'] ?>"></div>
-
-                                        <div class="mb-2">
-                                            <label class="fw-bold">Experience Level</label>
-                                            <select name="experienceLevel" class="form-select" required>
-                                                <option value="Entry-Level" <?= $job['ExperienceLevel'] === 'Entry-Level' ? 'selected' : '' ?>>Entry-Level</option>
-                                                <option value="Mid-Level" <?= $job['ExperienceLevel'] === 'Mid-Level' ? 'selected' : '' ?>>Mid-Level</option>
-                                                <option value="Senior-Level" <?= $job['ExperienceLevel'] === 'Senior-Level' ? 'selected' : '' ?>>Senior-Level</option>
-                                            </select>
-                                        </div>
-
-                                        <div class="mb-2">
-                                            <label class="fw-bold">Job Type</label>
-                                            <select name="jobType" class="form-select" required>
-                                                <option value="Full-Time" <?= $job['JobType'] === 'Full-Time' ? 'selected' : '' ?>>Full-Time</option>
-                                                <option value="Part-Time" <?= $job['JobType'] === 'Part-Time' ? 'selected' : '' ?>>Part-Time</option>
-                                                <option value="Contract" <?= $job['JobType'] === 'Contract' ? 'selected' : '' ?>>Contract</option>
-                                                <option value="Internship" <?= $job['JobType'] === 'Internship' ? 'selected' : '' ?>>Internship</option>
-                                                <option value="Freelance" <?= $job['JobType'] === 'Freelance' ? 'selected' : '' ?>>Freelance</option>
-                                            </select>
-                                        </div>
-
-                                        <div class="mb-2">
-                                            <label class="fw-bold">Work Setup</label>
-                                            <select name="workSetup" class="form-select" required>
-                                                <option value="On-Site" <?= $job['WorkSetup'] === 'On-Site' ? 'selected' : '' ?>>On-Site</option>
-                                                <option value="Remote" <?= $job['WorkSetup'] === 'Remote' ? 'selected' : '' ?>>Remote</option>
-                                                <option value="Hybrid" <?= $job['WorkSetup'] === 'Hybrid' ? 'selected' : '' ?>>Hybrid</option>
-                                            </select>
-                                        </div>
-
-                                        <div class="mb-2"><label class="fw-bold">Location</label><input type="text" name="location" class="form-control" value="<?= htmlspecialchars($job['Location']) ?>"></div>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                        <button type="submit" name="update_job" class="btn btn-primary">Save Changes</button>
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
                 </td>
             </tr>
-            <?php endwhile; endif; ?>
+
+            <div class="modal fade" id="editModal<?= $job['JobID'] ?>" tabindex="-1">
+                <div class="modal-dialog">
+                    <form method="POST"> 
+                        <div class="modal-content">
+                            <div class="modal-header"><h5 class="modal-title">Edit Job</h5></div>
+                            <div class="modal-body">
+    <input type="hidden" name="update_job_id" value="<?= $job['JobID'] ?>">
+    
+    <div class="mb-2">
+        <label>Title</label>
+        <input type="text" name="title" class="form-control" value="<?= htmlspecialchars($job['JobTitle']) ?>" required>
+    </div>
+    
+    <div class="mb-2">
+        <label>Description</label>
+        <textarea name="description" class="form-control"><?= htmlspecialchars($job['Description']) ?></textarea>
+    </div>
+    
+    <div class="mb-2">
+        <label>Salary</label>
+        <input type="number" name="salary" class="form-control" value="<?= htmlspecialchars($job['Salary']) ?>">
+    </div>
+
+    <div class="mb-2">
+        <label>Experience</label>
+        <select name="experienceLevel" class="form-select">
+            <option value="Entry-Level" <?= $job['ExperienceLevel'] === 'Entry-Level' ? 'selected' : '' ?>>Entry-Level</option>
+            <option value="Mid-Level" <?= $job['ExperienceLevel'] === 'Mid-Level' ? 'selected' : '' ?>>Mid-Level</option>
+            <option value="Senior-Level" <?= $job['ExperienceLevel'] === 'Senior-Level' ? 'selected' : '' ?>>Senior-Level</option>
+        </select>
+    </div>
+
+    <div class="mb-2">
+        <label>Type</label>
+        <select name="jobType" class="form-select">
+            <option value="Full-Time" <?= $job['JobType'] === 'Full-Time' ? 'selected' : '' ?>>Full-Time</option>
+            <option value="Part-Time" <?= $job['JobType'] === 'Part-Time' ? 'selected' : '' ?>>Part-Time</option>
+            <option value="Contract" <?= $job['JobType'] === 'Contract' ? 'selected' : '' ?>>Contract</option>
+            <option value="Internship" <?= $job['JobType'] === 'Internship' ? 'selected' : '' ?>>Internship</option>
+        </select>
+    </div>
+
+    <div class="mb-2">
+        <label>Setup</label>
+        <select name="workSetup" class="form-select">
+            <option value="On-Site" <?= $job['WorkSetup'] === 'On-Site' ? 'selected' : '' ?>>On-Site</option>
+            <option value="Remote" <?= $job['WorkSetup'] === 'Remote' ? 'selected' : '' ?>>Remote</option>
+            <option value="Hybrid" <?= $job['WorkSetup'] === 'Hybrid' ? 'selected' : '' ?>>Hybrid</option>
+        </select>
+    </div>
+
+    <div class="mb-2">
+        <label>Location</label>
+        <input type="text" name="location" class="form-control" value="<?= htmlspecialchars($job['Location']) ?>">
+    </div>
+</div>
+                            <div class="modal-footer"><button type="submit" name="update_job" class="btn btn-primary">Save Changes</button></div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <?php 
+                endwhile;
+            else: 
+            ?>
+            <tr><td colspan="6" class="text-center text-muted py-3">No posted jobs found.</td></tr>
+            <?php endif; ?>
         </tbody>
     </table>
 </div>
+            </div>
 
                 <div class="tab-pane fade <?= $activeTab === 'postJob' ? 'show active' : '' ?>" id="postJob">
                     <h5 class="fw-bold mb-4">Create a New Job</h5>
@@ -629,5 +655,7 @@ $totalPages = ceil($totalJobs / $limit);
             return true;
         }
     </script>
+
+    
 </body>
 </html>
