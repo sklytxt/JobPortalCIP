@@ -91,6 +91,14 @@ $initials = !empty($user['FullName']) ? strtoupper(substr(trim($user['FullName']
     </li>
 <?php endif; ?>
 
+<?php if (isset($user['Usertype']) && strtolower($user['Usertype']) === 'admin'): ?>
+    <li class="nav-item">
+        <a class="nav-link d-flex flex-column align-items-center text-center" href="adminDashboard.php">
+            <i class="fa fa-lock fs-5 mb-1"></i>
+            <span class="nav-label">Admin Panel</span>
+        </a>
+    </li>
+<?php endif; ?>
 
 
         </ul>
