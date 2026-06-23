@@ -14,7 +14,8 @@ class EmployerClass {
         return $result;
     }
 
-    public static function getJobsByEmployer($employerId, $search = '', $experience = '', $jobType = '', $workSetup = '', $minSalary = '', $location = '') {
+    // 1. UPDATED: Added $limit and $offset parameters to handle page constraints
+    public static function getJobsByEmployer($employerId, $search = '', $experience = '', $jobType = '', $workSetup = '', $minSalary = '', $location = '', $limit = 10, $offset = 0) {
         $conn = self::getConnection();
         $sql = "SELECT * FROM jobs WHERE EmployerID = ?";
         $types = "i";
@@ -52,6 +53,12 @@ class EmployerClass {
         }
 
         $sql .= " ORDER BY PostedDate DESC";
+        
+        // Append Pagination Constraint
+        $sql .= " LIMIT ? OFFSET ?";
+        $types .= "ii";
+        $params[] = $limit;
+        $params[] = $offset;
 
         $stmt = $conn->prepare($sql);
         $stmt->bind_param($types, ...$params);
@@ -62,7 +69,31 @@ class EmployerClass {
         return $result;
     }
 
-    public static function getApplicantsByEmployer($employerId, $search = '', $statusFilter = '') {
+    // 2. NEW METHOD: Counts total matches so the view knows how many page numbers to show
+    public static function getTotalJobsCount($employerId, $search = '', $experience = '', $jobType = '', $workSetup = '', $minSalary = '', $location = '') {
+        $conn = self::getConnection();
+        $sql = "SELECT COUNT(*) as total FROM jobs WHERE EmployerID = ?";
+        $types = "i";
+        $params = [$employerId];
+
+        if ($search !== '') { $sql .= " AND JobTitle LIKE ?"; $types .= "s"; $params[] = "%{$search}%"; }
+        if ($experience !== '') { $sql .= " AND ExperienceLevel = ?"; $types .= "s"; $params[] = $experience; }
+        if ($jobType !== '') { $sql .= " AND JobType = ?"; $types .= "s"; $params[] = $jobType; }
+        if ($workSetup !== '') { $sql .= " AND WorkSetup = ?"; $types .= "s"; $params[] = $workSetup; }
+        if ($minSalary !== '') { $sql .= " AND Salary >= ?"; $types .= "i"; $params[] = (int)$minSalary; }
+        if ($location !== '') { $sql .= " AND Location LIKE ?"; $types .= "s"; $params[] = "%{$location}%"; }
+
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param($types, ...$params);
+        $stmt->execute();
+        $row = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+        $conn->close();
+        return $row['total'] ?? 0;
+    }
+
+    // 3. UPDATED: Added $limit and $offset parameters for incoming candidates
+    public static function getApplicantsByEmployer($employerId, $search = '', $statusFilter = '', $limit = 10, $offset = 0) {
         $conn = self::getConnection();
         
         $sql = "SELECT a.*, u.FullName, j.JobTitle FROM applications a 
@@ -85,6 +116,12 @@ class EmployerClass {
         }
 
         $sql .= " ORDER BY a.AppliedDate DESC";
+        
+        // Append Pagination Constraint
+        $sql .= " LIMIT ? OFFSET ?";
+        $types .= "ii";
+        $params[] = $limit;
+        $params[] = $offset;
 
         $stmt = $conn->prepare($sql);
         $stmt->bind_param($types, ...$params);
@@ -93,6 +130,37 @@ class EmployerClass {
         $stmt->close();
         $conn->close();
         return $result;
+    }
+
+    // 4. NEW METHOD: Counts total matching applicants for dynamic page counts
+    public static function getTotalApplicantsCount($employerId, $search = '', $statusFilter = '') {
+        $conn = self::getConnection();
+        $sql = "SELECT COUNT(*) as total FROM applications a 
+                JOIN users u ON a.ApplicantID = u.UserID 
+                JOIN jobs j ON a.JobID = j.JobID 
+                WHERE a.EmployerID = ? AND a.Status != 'Rejected'";
+        $types = "i";
+        $params = [$employerId];
+
+        if ($search !== '') {
+            $sql .= " AND (u.FullName LIKE ? OR j.JobTitle LIKE ?)";
+            $types .= "ss";
+            $params[] = "%{$search}%";
+            $params[] = "%{$search}%";
+        }
+        if ($statusFilter !== '') {
+            $sql .= " AND a.Status = ?";
+            $types .= "s";
+            $params[] = $statusFilter;
+        }
+
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param($types, ...$params);
+        $stmt->execute();
+        $row = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+        $conn->close();
+        return $row['total'] ?? 0;
     }
 
     public static function getHiredApplicants($jobId) {

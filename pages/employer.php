@@ -63,6 +63,17 @@ $locationFilter = $_GET['location_filter'] ?? '';
 $appSearch    = $_GET['app_search'] ?? '';
 $statusFilter = $_GET['status_filter'] ?? '';
 
+// PAGINATION
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+if ($page < 1) $page = 1;
+$limit = 10;
+$offset = ($page - 1) * $limit;
+$search = $_GET['search'] ?? '';
+$employerId = $_SESSION['user_id'];
+$totalJobs = EmployerClass::getTotalJobsCount($employerId, $search);
+$totalPages = ceil($totalJobs / $limit);
+$jobsResult = EmployerClass::getJobsByEmployer($employerId, $search, '', '', '', '', '', $limit, $offset);
+
 ?>
 
 <!DOCTYPE html>
@@ -384,15 +395,15 @@ $statusFilter = $_GET['status_filter'] ?? '';
                         <div class="row">
                             <div class="col-md-4 mb-3">
                                 <label class="form-label fw-bold">Salary (PHP)</label>
-                                <input type="number" name="salary" class="form-control" placeholder="Enter amount or range">
+                                <input type="number" required name="salary" class="form-control" placeholder="Enter amount or range">
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label class="form-label fw-bold">Max Number of Hires</label>
-                                <input type="number" name="maxapplicants" class="form-control" value="1" min="1" required>
+                                <input type="number" required name="maxapplicants" class="form-control" value="1" min="1" required>
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label class="form-label fw-bold">Location</label>
-                                <input type="text" name="location" class="form-control" placeholder="e.g. Makati or Remote">
+                                <input type="text" required name="location" class="form-control" placeholder="e.g. Makati or Remote">
                             </div>
                         </div>
                         <div class="mb-4">
