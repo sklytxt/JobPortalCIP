@@ -65,12 +65,14 @@ $initials = !empty($user['FullName']) ? strtoupper(substr(trim($user['FullName']
               <span class="nav-label">Job List</span>
             </a>
           </li>
-          <li class="nav-item">
-            <a class="nav-link d-flex flex-column align-items-center text-center" href="jobs.php">
-              <i class="fa fa-briefcase fs-5 mb-1"></i>
-              <span class="nav-label">Jobs</span>
-            </a>
-          </li>
+          <?php if (isset($user['Usertype']) && strtolower($user['Usertype']) !== 'employer'): ?>
+    <li class="nav-item">
+        <a class="nav-link d-flex flex-column align-items-center text-center" href="jobs.php">
+            <i class="fa fa-briefcase fs-5 mb-1"></i>
+            <span class="nav-label">Jobs</span>
+        </a>
+    </li>
+<?php endif; ?>
           <?php if ($role === 'employer'): ?>
               <li class="nav-item">
                   <a class="nav-link d-flex flex-column align-items-center text-center" href="employer.php">

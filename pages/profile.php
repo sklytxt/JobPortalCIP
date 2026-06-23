@@ -90,8 +90,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <a class="d-flex flex-column align-items-center text-center text-decoration-none dropdown-toggle nav-link-profile" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
     
     <div class="avatar-sm mb-1 d-flex align-items-center justify-content-center overflow-hidden" style="width: 32px; height: 32px; border-radius: 50%; background: #eee;">
-      <?php if (!empty($user['ProfileImagePath']) && file_exists("../uploads/".$user['ProfileImagePath'])): ?>
-        <img src="../uploads/<?= htmlspecialchars($user['ProfileImagePath']) ?>" style="width:100%; height:100%; object-fit:cover;">
+      <?php if (!empty($user['ProfileImagePath']) && file_exists("../uploads/profile_img/" . $user['ProfileImagePath'])): ?>
+        <img src="../uploads/profile_img<?= htmlspecialchars($user['ProfileImagePath']) ?>" style="width:100%; height:100%; object-fit:cover;">
       <?php else: ?>
         <span class="text-secondary fw-bold">AR</span>
       <?php endif; ?>
@@ -128,7 +128,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <div class="text-center mb-4">
               <?php if (!empty($user['ProfileImagePath'])): ?>
-                <img src="../uploads/<?= htmlspecialchars($user['ProfileImagePath']) ?>"
+                <img src="../uploads/profile_img/<?= htmlspecialchars($user['ProfileImagePath']) ?>"
                      class="rounded-circle border"
                      style="width:120px;height:120px;object-fit:cover;">
               <?php else: ?>

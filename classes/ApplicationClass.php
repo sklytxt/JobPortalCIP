@@ -106,7 +106,7 @@ class ApplicationClass
     public static function hasApplied(int $jobId, int $applicantId): bool
     {
         $conn = self::getConnection();
-        $stmt = $conn->prepare("SELECT ApplicationID FROM applications WHERE JobID = ? AND ApplicantID = ? LIMIT 1");
+        $stmt = $conn->prepare("SELECT ApplicationID FROM applications WHERE JobID = ? AND ApplicantID = ? AND Status != 'Rejected' LIMIT 1");
         $stmt->bind_param("ii", $jobId, $applicantId);
         $stmt->execute();
         
@@ -116,7 +116,7 @@ class ApplicationClass
         $conn->close();
         return $exists;
     }
-
+    
     public static function withdrawApplication(int $appId, int $applicantId): bool
     {
         $conn = self::getConnection();
@@ -131,17 +131,30 @@ class ApplicationClass
     public static function getLatestApplicationStatus(int $jobId, int $applicantId): ?string 
     {
         $conn = self::getConnection();
-        // Fetch only the most recent status
         $stmt = $conn->prepare("SELECT Status FROM applications WHERE JobID = ? AND ApplicantID = ? ORDER BY ApplicationID DESC LIMIT 1");
         $stmt->bind_param("ii", $jobId, $applicantId);
         $stmt->execute();
-        
         $result = $stmt->get_result()->fetch_assoc();
         $status = $result ? $result['Status'] : null;
-        
         $stmt->close();
         $conn->close();
-        
         return $status;
     }
+
+    public static function getActiveApplicationCount(int $jobId): int 
+    {
+        $conn = self::getConnection();
+        $stmt = $conn->prepare("SELECT COUNT(*) FROM applications WHERE JobID = ? AND Status != 'Rejected'");
+        $stmt->bind_param("i", $jobId);
+        $stmt->execute();
+        $result = $stmt->get_result()->fetch_row();
+        $count = (int)($result[0] ?? 0);
+        $stmt->close();
+        $conn->close();
+        return $count;
+    }
+
+    
+    
 }
+

@@ -176,7 +176,7 @@ class EmployerClass {
 
     public static function updateApplicationStatus($applicationId, $status) {
         $conn = self::getConnection();
-        $stmt = $conn->prepare("UPDATE applications SET Status = ? WHERE ApplicationID = ?");
+        $stmt = $conn->prepare("UPDATE applications SET Status = ?, StatusDate = NOW() WHERE ApplicationID = ?");
         $stmt->bind_param("si", $status, $applicationId);
         $result = $stmt->execute();
         $stmt->close();
@@ -185,39 +185,40 @@ class EmployerClass {
     }
 
     public static function acceptApplicant($applicationId, $jobId) {
-        $conn = self::getConnection();
-        $conn->begin_transaction();
-        try {
-            $check = $conn->prepare("SELECT j.MaxApplicants, (SELECT COUNT(*) FROM applications WHERE JobID = ? AND Status = 'Accepted') as CurrentCount FROM jobs j WHERE j.JobID = ?");
-            $check->bind_param("ii", $jobId, $jobId);
-            $check->execute();
-            $data = $check->get_result()->fetch_assoc();
-            $check->close();
+    $conn = self::getConnection();
+    $conn->begin_transaction();
+    try {
+        $check = $conn->prepare("SELECT j.MaxApplicants, (SELECT COUNT(*) FROM applications WHERE JobID = ? AND Status = 'Accepted') as CurrentCount FROM jobs j WHERE j.JobID = ?");
+        $check->bind_param("ii", $jobId, $jobId);
+        $check->execute();
+        $data = $check->get_result()->fetch_assoc();
+        $check->close();
 
-            if ($data['CurrentCount'] >= $data['MaxApplicants']) {
-                throw new Exception("Maximum capacity reached for this job.");
-            }
-
-            $stmt1 = $conn->prepare("UPDATE applications SET Status = 'Accepted' WHERE ApplicationID = ?");
-            $stmt1->bind_param("i", $applicationId);
-            $stmt1->execute();
-            $stmt1->close();
-            
-            if ($data['CurrentCount'] + 1 >= $data['MaxApplicants']) {
-                $stmt2 = $conn->prepare("UPDATE jobs SET Status = 'Filled' WHERE JobID = ?");
-                $stmt2->bind_param("i", $jobId);
-                $stmt2->execute();
-                $stmt2->close();
-            }
-            $conn->commit();
-            return true;
-        } catch (Exception $e) {
-            $conn->rollback();
-            return $e->getMessage();
-        } finally {
-            $conn->close();
+        if ($data['CurrentCount'] >= $data['MaxApplicants']) {
+            throw new Exception("Maximum capacity reached for this job.");
         }
+
+        // UPDATED: Added StatusDate = NOW() here
+        $stmt1 = $conn->prepare("UPDATE applications SET Status = 'Accepted', StatusDate = NOW() WHERE ApplicationID = ?");
+        $stmt1->bind_param("i", $applicationId);
+        $stmt1->execute();
+        $stmt1->close();
+        
+        if ($data['CurrentCount'] + 1 >= $data['MaxApplicants']) {
+            $stmt2 = $conn->prepare("UPDATE jobs SET Status = 'Filled' WHERE JobID = ?");
+            $stmt2->bind_param("i", $jobId);
+            $stmt2->execute();
+            $stmt2->close();
+        }
+        $conn->commit();
+        return true;
+    } catch (Exception $e) {
+        $conn->rollback();
+        return $e->getMessage();
+    } finally {
+        $conn->close();
     }
+}
 
     public static function terminateContract($jobId, $applicationId) {
         $conn = self::getConnection();

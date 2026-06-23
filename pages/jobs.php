@@ -85,11 +85,13 @@ $rejectedApps = array_filter($allApplications, function($app) {
     </div>
   </nav>
 
-  <div class="container py-5">
+  
+<div class="container py-5">
     <h2 class="mb-4 fw-bold text-center">My Applications</h2>
     
-    <div class="row">
-        <div class="col-md-4 mb-5">
+    <div class="row justify-content-center">
+        
+        <div class="col-12 mb-5">
             <h4 class="mb-3 text-warning"><i class="fa fa-clock-o"></i> Pending</h4>
             <div class="table-responsive shadow-sm bg-white rounded">
                 <table class="table table-hover align-middle mb-0">
@@ -132,80 +134,70 @@ $rejectedApps = array_filter($allApplications, function($app) {
             </div>
         </div>
 
-        <div class="col-md-4 mb-5">
+        <div class="col-12 mb-5">
             <h4 class="mb-3 text-success"><i class="fa fa-check-circle"></i> Accepted</h4>
-            <div class="table-responsive shadow-sm bg-white rounded">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Company</th>
-                            <th>Job Title</th>
-                            <th class="text-center">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if (!empty($acceptedApps)): foreach ($acceptedApps as $app): ?>
-                            <tr>
-                                <td>
-                                    <?php 
-                                    $img = (!empty($app['ProfileImagePath']) && file_exists("../uploads/profile_img/" . $app['ProfileImagePath'])) ? "../uploads/profile_img/" . htmlspecialchars($app['ProfileImagePath']) : null; 
-                                    ?>
-                                    <?php if ($img): ?>
-                                        <img src="<?= $img ?>" style="width:30px; height:30px; border-radius:50%; object-fit:cover; margin-right:8px;">
-                                    <?php else: ?>
-                                        <div class="d-inline-block bg-secondary text-white text-center" style="width:30px; height:30px; border-radius:50%; line-height:30px; margin-right:8px; font-size:12px;"><?= strtoupper(substr($app['CompanyName'] ?? '?', 0, 1)) ?></div>
-                                    <?php endif; ?>
-                                    <?= htmlspecialchars($app['CompanyName'] ?? 'N/A') ?>
-                                </td>
-                                <td><?= htmlspecialchars($app['JobTitle']) ?></td>
-                                <td class="text-center"><span class="badge bg-success">Confirmed</span></td>
-                            </tr>
-                        <?php endforeach; else: ?>
-                            <tr><td colspan="3" class="text-center text-muted">No accepted apps.</td></tr>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
-            </div>
+<div class="table-responsive shadow-sm bg-white rounded">
+    <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+            <tr>
+                <th>Company</th>
+                <th>Job Title</th>
+                <th class="text-center">Status</th>
+                <th class="text-center">Date</th> </tr>
+        </thead>
+        <tbody>
+            <?php if (!empty($acceptedApps)): foreach ($acceptedApps as $app): ?>
+                <tr>
+                    <td>
+                        <?= htmlspecialchars($app['CompanyName'] ?? 'N/A') ?>
+                    </td>
+                    <td><?= htmlspecialchars($app['JobTitle']) ?></td>
+                    <td class="text-center"><span class="badge bg-success">Confirmed</span></td>
+                    <td class="text-center small text-muted">
+                        <?= !empty($app['StatusDate']) ? date('M j, Y', strtotime($app['StatusDate'])) : 'N/A' ?>
+                    </td>
+                </tr>
+            <?php endforeach; else: ?>
+                <tr><td colspan="4" class="text-center text-muted">No accepted apps.</td></tr>
+            <?php endif; ?>
+        </tbody>
+    </table>
+</div>
         </div>
 
-        <div class="col-md-4 mb-5">
+        <div class="col-12 mb-5">
             <h4 class="mb-3 text-danger"><i class="fa fa-times-circle"></i> Rejected</h4>
             <div class="table-responsive shadow-sm bg-white rounded">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Company</th>
-                            <th>Job Title</th>
-                            <th class="text-center">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if (!empty($rejectedApps)): foreach ($rejectedApps as $app): ?>
-                            <tr>
-                                <td>
-                                    <?php 
-                                    $img = (!empty($app['ProfileImagePath']) && file_exists("../uploads/profile_img/" . $app['ProfileImagePath'])) ? "../uploads/profile_img/" . htmlspecialchars($app['ProfileImagePath']) : null; 
-                                    ?>
-                                    <?php if ($img): ?>
-                                        <img src="<?= $img ?>" style="width:30px; height:30px; border-radius:50%; object-fit:cover; margin-right:8px;">
-                                    <?php else: ?>
-                                        <div class="d-inline-block bg-secondary text-white text-center" style="width:30px; height:30px; border-radius:50%; line-height:30px; margin-right:8px; font-size:12px;"><?= strtoupper(substr($app['CompanyName'] ?? '?', 0, 1)) ?></div>
-                                    <?php endif; ?>
-                                    <?= htmlspecialchars($app['CompanyName'] ?? 'N/A') ?>
-                                </td>
-                                <td><?= htmlspecialchars($app['JobTitle']) ?></td>
-                                <td class="text-center"><span class="badge bg-danger">Rejected</span></td>
-                            </tr>
-                        <?php endforeach; else: ?>
-                            <tr><td colspan="3" class="text-center text-muted">No rejected apps.</td></tr>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
-            </div>
+    <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+            <tr>
+                <th>Company</th>
+                <th>Job Title</th>
+                <th class="text-center">Status</th>
+                <th class="text-center">Date</th> </tr>
+        </thead>
+        <tbody>
+            <?php if (!empty($rejectedApps)): foreach ($rejectedApps as $app): ?>
+                <tr>
+                    <td>
+                        <?= htmlspecialchars($app['CompanyName'] ?? 'N/A') ?>
+                    </td>
+                    <td><?= htmlspecialchars($app['JobTitle']) ?></td>
+                    <td class="text-center"><span class="badge bg-danger">Rejected</span></td>
+                    <td class="text-center small text-muted">
+                        <?= !empty($app['StatusDate']) ? date('M j, Y', strtotime($app['StatusDate'])) : 'N/A' ?>
+                    </td>
+                </tr>
+            <?php endforeach; else: ?>
+                <tr><td colspan="4" class="text-center text-muted">No rejected apps.</td></tr>
+            <?php endif; ?>
+        </tbody>
+    </table>
+</div>
         </div>
+        
     </div>
   </div>
-
   <footer class="footer-custom mt-5 border-top bg-green text-white">
     <div class="container py-4">
       <div class="row align-items-center justify-content-between g-3">
