@@ -14,6 +14,7 @@ if (!isset($_GET['id'])) {
     exit();
 }
 
+$user = UserClass::getUserById($_SESSION['user_id']); // Fetching user to verify role
 $jobId = $_GET['id'];
 $job = EmployerClass::getJobDetails($jobId);
 
@@ -22,11 +23,16 @@ if (!$job) {
     exit();
 }
 
+// BACKEND SECURITY: Only allow termination if user is an employer AND owns this specific job
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['terminate_single'])) {
-    $appId = $_POST['app_id_to_terminate'];
-    if (EmployerClass::terminateContract($jobId, $appId)) {
-        header("Location: job-details.php?id=" . $jobId);
-        exit();
+    if ($user['Usertype'] === 'employer' && (int)$job['EmployerID'] === (int)$_SESSION['user_id']) {
+        $appId = $_POST['app_id_to_terminate'];
+        if (EmployerClass::terminateContract($jobId, $appId)) {
+            header("Location: job-details.php?id=" . $jobId);
+            exit();
+        }
+    } else {
+        die("Unauthorized access.");
     }
 }
 
@@ -107,7 +113,7 @@ $hiredApplicants = EmployerClass::getHiredApplicants($jobId);
                 </span>
             </div>
         </div>
-</div>
+    </div>
         
         <hr>
         
@@ -129,7 +135,7 @@ $hiredApplicants = EmployerClass::getHiredApplicants($jobId);
                                 <div class="d-flex align-items-center gap-2">
                                     <div class="overflow-hidden d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; border-radius: 50%; background: #ddd;">
                                         <?php if (!empty($hired['ProfileImagePath']) && file_exists("../uploads/profile_img/" . $hired['ProfileImagePath'])): ?>
-                                            <img src="../uploads/profile_img/?= htmlspecialchars($hired['ProfileImagePath']) ?>" style="width:100%; height:100%; object-fit:cover;">
+                                            <img src="../uploads/profile_img/<?= htmlspecialchars($hired['ProfileImagePath']) ?>" style="width:100%; height:100%; object-fit:cover;">
                                         <?php else: ?>
                                             <span class="fw-bold text-secondary"><?= substr($hired['FullName'], 0, 1) ?></span>
                                         <?php endif; ?>
@@ -140,12 +146,14 @@ $hiredApplicants = EmployerClass::getHiredApplicants($jobId);
                                     </div>
                                 </div>
                                 
+                                <?php if ($user['Usertype'] === 'employer' && (int)$job['EmployerID'] === (int)$_SESSION['user_id']): ?>
                                 <form method="POST" onsubmit="return confirm('Terminate this contract?');">
                                     <input type="hidden" name="app_id_to_terminate" value="<?= $hired['ApplicationID'] ?>">
                                     <button type="submit" name="terminate_single" class="btn btn-outline-danger btn-sm p-1">
                                         <i class="fa fa-times"></i>
                                     </button>
                                 </form>
+                                <?php endif; ?>
                             </div>
                         <?php endwhile; ?>
                     <?php else: ?>
@@ -156,8 +164,8 @@ $hiredApplicants = EmployerClass::getHiredApplicants($jobId);
                     <h6 class="fw-bold mb-3">Managed By</h6>
                     <div class="d-flex align-items-center gap-3 mb-3">
                         <div class="overflow-hidden d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; border-radius: 50%; background: #eee;">
-                            <?php if (!empty($job['ProfileImagePath']) && file_exists("../uploads/profile_img".$job['ProfileImagePath'])): ?>
-                                <img src="../uploads/profile_img/?= htmlspecialchars($job['ProfileImagePath']) ?>" style="width:100%; height:100%; object-fit:cover;">
+                            <?php if (!empty($job['ProfileImagePath']) && file_exists("../uploads/profile_img/" . $job['ProfileImagePath'])): ?>
+                                <img src="../uploads/profile_img/<?= htmlspecialchars($job['ProfileImagePath']) ?>" style="width:100%; height:100%; object-fit:cover;">
                             <?php else: ?>
                                 <span class="fw-bold text-secondary"><?= substr($job['EmployerName'], 0, 1) ?></span>
                             <?php endif; ?>

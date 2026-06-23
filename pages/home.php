@@ -69,7 +69,7 @@ $initials = !empty($user['FullName']) ? strtoupper(substr(trim($user['FullName']
     <li class="nav-item">
         <a class="nav-link d-flex flex-column align-items-center text-center" href="jobs.php">
             <i class="fa fa-briefcase fs-5 mb-1"></i>
-            <span class="nav-label">Jobs</span>
+            <span class="nav-label">Application</span>
         </a>
     </li>
 <?php endif; ?>
@@ -80,6 +80,19 @@ $initials = !empty($user['FullName']) ? strtoupper(substr(trim($user['FullName']
                   </a>
               </li>
           <?php endif; ?>
+          
+
+<?php if (isset($user['Usertype']) && strtolower($user['Usertype']) !== 'employer'): ?>
+    <li class="nav-item">
+        <a class="nav-link d-flex flex-column align-items-center text-center" href="my-jobs.php">
+            <i class="fa fa-briefcase fs-5 mb-1"></i>
+            <span class="nav-label">My Jobs</span>
+        </a>
+    </li>
+<?php endif; ?>
+
+
+
         </ul>
         <div class="navbar-nav ms-auto align-items-center border-start-lg ps-lg-4 py-2 py-lg-0">
           <div class="dropdown">
@@ -151,7 +164,7 @@ $initials = !empty($user['FullName']) ? strtoupper(substr(trim($user['FullName']
             <h3 class="fw-bold mb-2">Welcome Back, <?= htmlspecialchars($user['FullName']) ?></h3>
             <p class="text-secondary mb-0 small-note">
               <?php if ($role === 'employer'): ?>
-                Manage your active openings, search jobseekers, and fill open slots effortlessly.
+                You are an employer. Manage your active openings, search jobseekers, and fill open slots effortlessly.
               <?php else: ?>
                 Stay on top of your applications and discover new career opportunities.
               <?php endif; ?>

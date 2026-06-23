@@ -116,7 +116,7 @@ class ApplicationClass
         $conn->close();
         return $exists;
     }
-    
+
     public static function withdrawApplication(int $appId, int $applicantId): bool
     {
         $conn = self::getConnection();
@@ -154,7 +154,27 @@ class ApplicationClass
         return $count;
     }
 
-    
-    
+    public static function getAcceptedJobsPaginated(int $userId, int $limit, int $offset) {
+        $conn = self::getConnection();
+        $stmt = $conn->prepare("SELECT a.*, j.JobTitle, j.Salary, j.Location, u.CompanyName, u.ProfileImagePath FROM applications a JOIN jobs j ON a.JobID = j.JobID JOIN users u ON j.EmployerID = u.UserID WHERE a.ApplicantID = ? AND a.Status = 'Accepted' ORDER BY a.AppliedDate DESC LIMIT ? OFFSET ?");
+        $stmt->bind_param("iii", $userId, $limit, $offset);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $conn->close();
+        return $result;
+    }
+
+    public static function countAcceptedJobs(int $userId): int {
+        $conn = self::getConnection();
+        $stmt = $conn->prepare("SELECT COUNT(*) FROM applications WHERE ApplicantID = ? AND Status = 'Accepted'");
+        $stmt->bind_param("i", $userId);
+        $stmt->execute();
+        $count = $stmt->get_result()->fetch_row()[0];
+        $conn->close();
+        return (int)$count;
+    }
+
+
+
 }
 

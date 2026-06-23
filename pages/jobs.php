@@ -62,15 +62,30 @@ $rejectedApps = array_filter($allApplications, function($app) {
         <ul class="navbar-nav mx-auto align-items-center column-nav gap-0 gap-lg-4 py-2 py-lg-0">
           <li class="nav-item"><a class="nav-link d-flex flex-column align-items-center text-center text-white-50" href="home.php"><i class="fa fa-home fs-5 mb-1"></i><span class="nav-label">Home</span></a></li>
           <li class="nav-item"><a class="nav-link d-flex flex-column align-items-center text-center text-white-50" href="job-list.php"><i class="fa fa-list-ul fs-5 mb-1"></i><span class="nav-label">Job List</span></a></li>
-          <li class="nav-item"><a class="nav-link d-flex flex-column align-items-center text-center active text-white" href="jobs.php"><i class="fa fa-briefcase fs-5 mb-1"></i><span class="nav-label">Jobs</span></a></li>
+          <li class="nav-item"><a class="nav-link d-flex flex-column align-items-center text-center active text-white" href="jobs.php"><i class="fa fa-briefcase fs-5 mb-1"></i><span class="nav-label">Application</span></a></li>
           <?php if (isset($user['Usertype']) && strtolower($user['Usertype']) === 'employer'): ?>
             <li class="nav-item"><a class="nav-link d-flex flex-column align-items-center text-center" href="employer.php"><i class="fa fa-building fs-5 mb-1"></i><span class="nav-label">Employer</span></a></li>
           <?php endif; ?>
+          <?php if (isset($user['Usertype']) && strtolower($user['Usertype']) !== 'employer'): ?>
+    <li class="nav-item">
+        <a class="nav-link d-flex flex-column align-items-center text-center" href="my-jobs.php">
+            <i class="fa fa-briefcase fs-5 mb-1"></i>
+            <span class="nav-label">My Jobs</span>
+        </a>
+    </li>
+<?php endif; ?>
         </ul>
+        
         <div class="navbar-nav ms-auto align-items-center border-start-lg ps-lg-4 py-2 py-lg-0">
           <div class="dropdown">
             <a class="d-flex flex-column align-items-center text-center text-decoration-none dropdown-toggle nav-link-profile" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-              <div class="avatar-sm mb-1"><?= strtoupper(substr($user['FullName'] ?? 'U', 0, 1)) ?></div>
+              <div class="avatar-sm mb-1 d-flex align-items-center justify-content-center overflow-hidden" style="width: 32px; height: 32px; border-radius: 50%; background: #eee;">
+    <?php if (!empty($user['ProfileImagePath']) && file_exists("../uploads/profile_img/" . $user['ProfileImagePath'])): ?>
+        <img src="../uploads/profile_img/<?= htmlspecialchars($user['ProfileImagePath']) ?>" style="width:100%; height:100%; object-fit:cover;">
+    <?php else: ?>
+        <span class="text-secondary fw-bold"><?= strtoupper(substr($user['FullName'] ?? 'U', 0, 1)) ?></span>
+    <?php endif; ?>
+</div>
               <span class="nav-label text-white-50">Me</span>
             </a>
             <ul class="dropdown-menu dropdown-menu-end border-0 shadow-sm mt-2">
