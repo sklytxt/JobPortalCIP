@@ -39,26 +39,47 @@ class UserClass {
     }
 
     public static function updateProfile($userId, $data, $file) {
-        $conn = self::getDb();
-        $fullName = $data['fullname'];
-        $email = $data['email'];
-        $jobTitle = $data['jobtitle'] ?? null;
-        $companyName = $data['companyname'] ?? null;
-        $contact = $data['contact'];
-        $location = $data['location'];
-        $fileName = null;
-        if (!empty($file['profile_image']['name'])) {
-            $fileName = time() . "_" . basename($file['profile_image']['name']);
-            move_uploaded_file($file['profile_image']['tmp_name'], "../uploads/" . $fileName);
-        }
-        if ($fileName) {
-            $stmt = $conn->prepare("UPDATE users SET FullName=?, Email=?, JobTitle=?, CompanyName=?, ContactNumber=?, Location=?, ProfileImagePath=? WHERE UserID=?");
-            $stmt->bind_param("sssssssi", $fullName, $email, $jobTitle, $companyName, $contact, $location, $fileName, $userId);
-        } else {
-            $stmt = $conn->prepare("UPDATE users SET FullName=?, Email=?, JobTitle=?, CompanyName=?, ContactNumber=?, Location=? WHERE UserID=?");
-            $stmt->bind_param("ssssssi", $fullName, $email, $jobTitle, $companyName, $contact, $location, $userId);
-        }
-        return $stmt->execute();
+    $conn = self::getDb();
+
+    $fullName = trim($data['fullname'] ?? '');
+    $email = $data['email'] ?? '';
+    $jobTitle = $data['jobtitle'] ?? null;
+    $companyName = $data['companyname'] ?? null;
+    $contact = trim($data['contact'] ?? '');
+    $location = $data['location'] ?? '';
+
+    $namePattern = "/^[a-zA-Z\s\.\-]+$/";
+    $contactPattern = "/^(09|\+639)\d{9}$/";
+
+    if (empty($fullName) || empty($contact)) {
+        return "Full Name and Contact fields cannot be empty.";
+    }
+    if (!preg_match($namePattern, $fullName)) {
+        return "Full Name can only contain letters, dots, hyphens, and spaces.";
+    }
+    if (!preg_match($contactPattern, $contact)) {
+        return "Invalid Contact format. Please use a valid PH mobile number (e.g., 09123456789).";
+    }
+
+    $fileName = null;
+    if (!empty($file['profile_image']['name'])) {
+        $fileName = time() . "_" . basename($file['profile_image']['name']);
+        move_uploaded_file($file['profile_image']['tmp_name'], "../uploads/" . $fileName);
+    }
+
+    if ($fileName) {
+        $stmt = $conn->prepare("UPDATE users SET FullName=?, Email=?, JobTitle=?, CompanyName=?, ContactNumber=?, Location=?, ProfileImagePath=? WHERE UserID=?");
+        $stmt->bind_param("sssssssi", $fullName, $email, $jobTitle, $companyName, $contact, $location, $fileName, $userId);
+    } else {
+        $stmt = $conn->prepare("UPDATE users SET FullName=?, Email=?, JobTitle=?, CompanyName=?, ContactNumber=?, Location=? WHERE UserID=?");
+        $stmt->bind_param("ssssssi", $fullName, $email, $jobTitle, $companyName, $contact, $location, $userId);
+    }
+    
+    $success = $stmt->execute();
+    $stmt->close();
+    $conn->close();
+
+    return $success ? true : "Database processing error. Please try again.";
     }
 }
 ?>

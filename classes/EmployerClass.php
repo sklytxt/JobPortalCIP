@@ -64,7 +64,11 @@ class EmployerClass {
 
     public static function getApplicantsByEmployer($employerId, $search = '', $statusFilter = '') {
         $conn = self::getConnection();
-        $sql = "SELECT a.*, u.FullName, j.JobTitle FROM applications a JOIN users u ON a.ApplicantID = u.UserID JOIN jobs j ON a.JobID = j.JobID WHERE a.EmployerID = ?";
+        
+        $sql = "SELECT a.*, u.FullName, j.JobTitle FROM applications a 
+                JOIN users u ON a.ApplicantID = u.UserID 
+                JOIN jobs j ON a.JobID = j.JobID 
+                WHERE a.EmployerID = ? AND a.Status != 'Rejected'";
         $types = "i";
         $params = [$employerId];
 
