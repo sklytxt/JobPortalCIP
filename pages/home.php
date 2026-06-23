@@ -19,7 +19,7 @@ $role = $user['Usertype'] ?? 'jobseeker';
 
 if ($role === 'employer') {
     $stats = HomeClass::getEmployerStats($current_user_id);
-    $totalApplications = $stats['pending_apps']; 
+    $totalApplications = $stats['pending_apps'] ?? 0; 
 } else {
     $totalApplications = AuthClass::countUserApplications($current_user_id);
 }
@@ -83,8 +83,8 @@ $initials = !empty($user['FullName']) ? strtoupper(substr(trim($user['FullName']
           <div class="dropdown">
             <a class="d-flex flex-column align-items-center text-center text-decoration-none dropdown-toggle nav-link-profile" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
               <div class="avatar-sm mb-1 d-flex align-items-center justify-content-center overflow-hidden" style="width: 32px; height: 32px; border-radius: 50%; background: #eee;">
-                <?php if (!empty($user['ProfileImagePath']) && file_exists("../uploads/".$user['ProfileImagePath'])): ?>
-                  <img src="../uploads/<?= htmlspecialchars($user['ProfileImagePath']) ?>" style="width:100%; height:100%; object-fit:cover;">
+                <?php if (!empty($user['ProfileImagePath']) && file_exists("../uploads/profile_img/" . $user['ProfileImagePath'])): ?>
+                  <img src="../uploads/profile_img/<?= htmlspecialchars($user['ProfileImagePath']) ?>" style="width:100%; height:100%; object-fit:cover;">
                 <?php else: ?>
                   <span class="text-secondary fw-bold small"><?= $initials ?></span>
                 <?php endif; ?>
@@ -108,8 +108,8 @@ $initials = !empty($user['FullName']) ? strtoupper(substr(trim($user['FullName']
       <div class="row g-4">
         <aside class="col-lg-3">
           <div class="card border-0 shadow-sm p-4 text-center">
-            <?php if (!empty($user['ProfileImagePath']) && file_exists("../uploads/".$user['ProfileImagePath'])): ?>
-              <img src="../uploads/<?= htmlspecialchars($user['ProfileImagePath']) ?>"
+            <?php if (!empty($user['ProfileImagePath']) && file_exists("../uploads/profile_img/" . $user['ProfileImagePath'])): ?>
+              <img src="../uploads/profile_img/<?= htmlspecialchars($user['ProfileImagePath']) ?>"
                    alt="profile"
                    style="width:100px;height:100px;object-fit:cover;border-radius:50%;display:block;margin:0 auto 12px auto;border:1px solid #ddd;">
             <?php else: ?>
@@ -135,7 +135,7 @@ $initials = !empty($user['FullName']) ? strtoupper(substr(trim($user['FullName']
                     <i class="fa fa-phone me-2 text-green"></i><?= htmlspecialchars($user['ContactNumber'] ?? 'No contact number') ?>
                 </div>
                 <div class="small-note text-muted-custom text-truncate">
-                    <i class="fa fa-envelope me-2 text-green"></i><?= htmlspecialchars($user['Usertype'] ?? 'N/A') ?>
+                    <i class="fa fa-id-card-o me-2 text-green"></i><?= htmlspecialchars($user['Usertype'] ?? 'N/A') ?>
                 </div>
             </div>
             <div class="d-grid mt-4">
@@ -160,13 +160,13 @@ $initials = !empty($user['FullName']) ? strtoupper(substr(trim($user['FullName']
             <?php if ($role === 'employer'): ?>
               <div class="col-md-6">
                   <div class="card border-0 shadow-sm p-3 text-center">
-                      <h3 class="fw-bold text-success mb-1"><?= $stats['total_jobs'] ?></h3>
+                      <h3 class="fw-bold text-success mb-1"><?= $stats['total_jobs'] ?? 0 ?></h3>
                       <p class="small-note text-muted mb-0">Active Openings</p>
                   </div>
               </div>
               <div class="col-md-6">
                   <div class="card border-0 shadow-sm p-3 text-center">
-                      <h3 class="fw-bold text-warning mb-1"><?= $stats['pending_apps'] ?></h3>
+                      <h3 class="fw-bold text-warning mb-1"><?= $stats['pending_apps'] ?? 0 ?></h3>
                       <p class="small-note text-muted mb-0">Unreviewed Applicants</p>
                   </div>
               </div>
@@ -217,9 +217,11 @@ $initials = !empty($user['FullName']) ? strtoupper(substr(trim($user['FullName']
               </div>
               <?php 
               $jobs = HomeClass::getPublicJobs();
-              if ($jobs->num_rows > 0):
+              if ($jobs && $jobs->num_rows > 0):
                   while ($job = $jobs->fetch_assoc()): 
-                      $empImg = !empty($job['ProfileImagePath']) && file_exists("../uploads/".$job['ProfileImagePath']) ? "../uploads/".$job['ProfileImagePath'] : null;
+                      // Note: Added null-coalescing fallback in case ProfileImagePath isn't selected in the SQL Join
+                      $imageFilename = $job['ProfileImagePath'] ?? '';
+                      $empImg = !empty($imageFilename) && file_exists("../uploads/profile_img/" . $imageFilename) ? "../uploads/profile_img/" . $imageFilename : null;
               ?>
                 <div class="border-bottom pb-3 mb-3 d-flex align-items-center gap-3">
                   <div class="overflow-hidden bg-light border flex-shrink-0" style="width:48px; height:48px; border-radius:8px;">
@@ -238,7 +240,7 @@ $initials = !empty($user['FullName']) ? strtoupper(substr(trim($user['FullName']
                     <span class="badge bg-light text-dark border-1 border"><?= htmlspecialchars($job['JobType']) ?></span>
                   </div>
                   <div>
-                     <span class="text-success small fw-bold">₱<?= number_format((float)$job['Salary']) ?></span>
+                     <span class="text-success small fw-bold">₱<?= number_format((float)($job['Salary'] ?? 0)) ?></span>
                   </div>
                 </div>
               <?php 

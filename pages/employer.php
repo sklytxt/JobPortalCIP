@@ -53,27 +53,28 @@ if (isset($_POST['delete_job_id'])) {
     }
 }
 
+// Active Tab Tracking
 $activeTab = $_GET['tab'] ?? 'manageJobs';
+
+// Filtering Inputs
 $jobSearch      = $_GET['job_search'] ?? '';
 $expFilter      = $_GET['exp_filter'] ?? '';
 $typeFilter     = $_GET['type_filter'] ?? '';
 $setupFilter    = $_GET['setup_filter'] ?? '';
 $salaryFilter   = $_GET['salary_filter'] ?? '';
 $locationFilter = $_GET['location_filter'] ?? '';
-$appSearch    = $_GET['app_search'] ?? '';
-$statusFilter = $_GET['status_filter'] ?? '';
+$appSearch      = $_GET['app_search'] ?? '';
+$statusFilter   = $_GET['status_filter'] ?? '';
 
-// PAGINATION
+// PAGINATION Setup
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 if ($page < 1) $page = 1;
 $limit = 10;
 $offset = ($page - 1) * $limit;
-$search = $_GET['search'] ?? '';
 $employerId = $_SESSION['user_id'];
-$totalJobs = EmployerClass::getTotalJobsCount($employerId, $search);
-$totalPages = ceil($totalJobs / $limit);
-$jobsResult = EmployerClass::getJobsByEmployer($employerId, $search, '', '', '', '', '', $limit, $offset);
 
+$totalJobs = EmployerClass::getTotalJobsCount($employerId, $jobSearch);
+$totalPages = ceil($totalJobs / $limit);
 ?>
 
 <!DOCTYPE html>
@@ -127,8 +128,8 @@ $jobsResult = EmployerClass::getJobsByEmployer($employerId, $search, '', '', '',
                     <div class="dropdown">
                         <a class="d-flex flex-column align-items-center text-center text-decoration-none dropdown-toggle nav-link-profile" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <div class="avatar-sm mb-1 d-flex align-items-center justify-content-center overflow-hidden" style="width: 32px; height: 32px; border-radius: 50%; background: #eee;">
-                                <?php if (!empty($user['ProfileImagePath']) && file_exists("../uploads/" . $user['ProfileImagePath'])): ?>
-                                    <img src="../uploads/<?= htmlspecialchars($user['ProfileImagePath']) ?>" style="width:100%; height:100%; object-fit:cover;">
+                                <?php if (!empty($user['ProfileImagePath']) && file_exists("../uploads/profile_img/" . $user['ProfileImagePath'])): ?>
+                                    <img src="../uploads/profile_img/<?= htmlspecialchars($user['ProfileImagePath']) ?>" style="width:100%; height:100%; object-fit:cover;">
                                 <?php else: ?>
                                     <span class="text-secondary fw-bold"><?= substr($user['FullName'], 0, 1) ?></span>
                                 <?php endif; ?>
@@ -139,7 +140,7 @@ $jobsResult = EmployerClass::getJobsByEmployer($employerId, $search, '', '', '',
                             <li><a class="dropdown-item py-2 small-note" href="profile.php"><i class="fa fa-user-o me-2"></i> My Profile</a></li>
                             <li><a class="dropdown-item py-2 small-note" href="dashboard.php"><i class="fa fa-th-large me-2"></i> Dashboard</a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item py-2 small-note text-danger" href="home.php?logout=1"><i class="fa fa-sign-out me-2"></i> Logout</a></li>
+                            <li><a class="dropdown-item py-2 small-note text-danger" href="employer.php?logout=1"><i class="fa fa-sign-out me-2"></i> Logout</a></li>
                         </ul>
                     </div>
                 </div>
@@ -153,8 +154,8 @@ $jobsResult = EmployerClass::getJobsByEmployer($employerId, $search, '', '', '',
             <div class="card p-4 mb-4 border-0 shadow-sm">
                 <div class="d-flex align-items-center gap-3">
                     <div class="d-flex align-items-center justify-content-center overflow-hidden" style="width: 60px; height: 60px; border-radius: 50%; background: #eee;">
-                        <?php if (!empty($user['ProfileImagePath']) && file_exists("../uploads/" . $user['ProfileImagePath'])): ?>
-                            <img src="../uploads/<?= htmlspecialchars($user['ProfileImagePath']) ?>" style="width:100%; height:100%; object-fit:cover;">
+                        <?php if (!empty($user['ProfileImagePath']) && file_exists("../uploads/profile_img/" . $user['ProfileImagePath'])): ?>
+                            <img src="../uploads/profile_img/<?= htmlspecialchars($user['ProfileImagePath']) ?>" style="width:100%; height:100%; object-fit:cover;">
                         <?php else: ?>
                             <span class="text-secondary fw-bold fs-4"><?= substr($user['FullName'], 0, 1) ?></span>
                         <?php endif; ?>
@@ -167,9 +168,15 @@ $jobsResult = EmployerClass::getJobsByEmployer($employerId, $search, '', '', '',
             </div>
 
             <ul class="nav nav-tabs border-0 mb-3" id="employerTabs">
-                <li class="nav-item"><button class="nav-link <?= $activeTab === 'manageJobs' ? 'active' : '' ?>" data-bs-toggle="tab" data-bs-target="#manageJobs">My Jobs</button></li>
-                <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#postJob">Post New Job</button></li>
-                <li class="nav-item"><button class="nav-link <?= $activeTab === 'applicants' ? 'active' : '' ?>" data-bs-toggle="tab" data-bs-target="#applicants">Applicants</button></li>
+                <li class="nav-item">
+                    <button class="nav-link <?= $activeTab === 'manageJobs' ? 'active' : '' ?>" data-bs-toggle="tab" data-bs-target="#manageJobs">My Jobs</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link <?= $activeTab === 'postJob' ? 'active' : '' ?>" data-bs-toggle="tab" data-bs-target="#postJob">Post New Job</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link <?= $activeTab === 'applicants' ? 'active' : '' ?>" data-bs-toggle="tab" data-bs-target="#applicants">Applicants</button>
+                </li>
             </ul>
 
             <div class="tab-content card p-4 border-0 shadow-sm">
@@ -217,7 +224,8 @@ $jobsResult = EmployerClass::getJobsByEmployer($employerId, $search, '', '', '',
                             <tbody>
                                 <?php
                                 $applicants = EmployerClass::getApplicantsByEmployer($_SESSION['user_id'], $appSearch, $statusFilter);
-                                while ($app = $applicants->fetch_assoc()):
+                                if ($applicants && $applicants->num_rows > 0):
+                                    while ($app = $applicants->fetch_assoc()):
                                 ?>
                                 <tr>
                                     <td><?= htmlspecialchars($app['FullName']) ?></td>
@@ -236,7 +244,7 @@ $jobsResult = EmployerClass::getJobsByEmployer($employerId, $search, '', '', '',
                                             <form method="POST" action="employer.php" class="d-inline">
                                                 <input type="hidden" name="jobid" value="<?= $app['JobID'] ?>">
                                                 <input type="hidden" name="appid" value="<?= $app['ApplicationID'] ?>">
-                                                <button name="status" value="Accepted" class="btn btn-sm btn-success">Accept</button>
+                                                <button name="status" value="Accepted" class="btn btn-sm btn-success me-1">Accept</button>
                                                 <button name="status" value="Rejected" class="btn btn-sm btn-danger">Reject</button>
                                             </form>
                                         <?php else: ?>
@@ -246,7 +254,12 @@ $jobsResult = EmployerClass::getJobsByEmployer($employerId, $search, '', '', '',
                                         <?php endif; ?>
                                     </td>
                                 </tr>
-                                <?php endwhile; ?>
+                                <?php 
+                                    endwhile; 
+                                else:
+                                ?>
+                                <tr><td colspan="6" class="text-center text-muted py-3">No applicants found.</td></tr>
+                                <?php endif; ?>
                             </tbody>
                         </table>
                     </div>
@@ -289,14 +302,13 @@ $jobsResult = EmployerClass::getJobsByEmployer($employerId, $search, '', '', '',
                                 <option value="Hybrid" <?= $setupFilter === 'Hybrid' ? 'selected' : '' ?>>Hybrid</option>
                             </select>
                         </div>
-
-                        <div class="col-md-2">
+                        <div class="col-md-3">
                             <label class="form-label small fw-bold mb-1">Location</label>
                             <input type="text" name="location_filter" class="form-control form-control-sm" placeholder="e.g. Makati" value="<?= htmlspecialchars($locationFilter) ?>">
                         </div>
                         <div class="col-12 d-flex gap-2 mt-2">
-                            <button type="submit" class="btn btn-sm btn-success"><i class="fa fa-search"></i> Search</button>
-                            <?php if ($jobSearch !== '' || $expFilter !== '' || $typeFilter !== '' || $setupFilter !== '' || $salaryFilter !== '' || $locationFilter !== ''): ?>
+                            <button type="submit" class="btn btn-sm btn-success"><i class="fa fa-search"></i> Filter</button>
+                            <?php if ($jobSearch !== '' || $expFilter !== '' || $typeFilter !== '' || $setupFilter !== '' || $locationFilter !== ''): ?>
                                 <a href="employer.php?tab=manageJobs" class="btn btn-sm btn-outline-secondary">Clear filters</a>
                             <?php endif; ?>
                         </div>
@@ -316,17 +328,17 @@ $jobsResult = EmployerClass::getJobsByEmployer($employerId, $search, '', '', '',
                             </thead>
                             <tbody>
                                 <?php
-                                $jobs = EmployerClass::getJobsByEmployer($_SESSION['user_id'], $jobSearch, $expFilter, $typeFilter, $setupFilter, $salaryFilter, $locationFilter);
-                                while ($job = $jobs->fetch_assoc()):
-                                    $isFilled = ($job['Status'] === 'Filled');
-                                    $statusClass = $isFilled ? 'text-danger' : 'text-success';
+                                $jobs = EmployerClass::getJobsByEmployer($_SESSION['user_id'], $jobSearch, $expFilter, $typeFilter, $setupFilter, $salaryFilter, $locationFilter, $limit, $offset);
+                                if ($jobs && $jobs->num_rows > 0):
+                                    while ($job = $jobs->fetch_assoc()):
+                                        $isFilled = ($job['Status'] === 'Filled');
+                                        $statusClass = $isFilled ? 'text-danger' : 'text-success';
                                 ?>
                                 <tr>
                                     <td>
                                         <div class="fw-bold text-dark"><?= htmlspecialchars($job['JobTitle']) ?></div>
                                         <small class="text-muted">
-                                            Status:
-                                            <span class="<?= $statusClass ?> fw-bold"><?= htmlspecialchars($job['Status']) ?></span>
+                                            Status: <span class="<?= $statusClass ?> fw-bold"><?= htmlspecialchars($job['Status']) ?></span>
                                         </small>
                                     </td>
                                     <td>
@@ -336,7 +348,7 @@ $jobsResult = EmployerClass::getJobsByEmployer($employerId, $search, '', '', '',
                                         <div><?= htmlspecialchars($job['JobType']) ?></div>
                                         <small class="text-muted"><?= htmlspecialchars($job['WorkSetup']) ?></small>
                                     </td>
-                                    <td class="fw-bold">₱ <?= htmlspecialchars($job['Salary']) ?></td>
+                                    <td class="fw-bold">₱ <?= number_format((float)$job['Salary'], 2) ?></td>
                                     <td><?= htmlspecialchars($job['Location']) ?></td>
                                     <td>
                                         <div class="d-flex gap-2">
@@ -352,13 +364,18 @@ $jobsResult = EmployerClass::getJobsByEmployer($employerId, $search, '', '', '',
                                         </div>
                                     </td>
                                 </tr>
-                                <?php endwhile; ?>
+                                <?php 
+                                    endwhile;
+                                else: 
+                                ?>
+                                <tr><td colspan="6" class="text-center text-muted py-3">No posted jobs found.</td></tr>
+                                <?php endif; ?>
                             </tbody>
                         </table>
                     </div>
                 </div>
 
-                <div class="tab-pane fade" id="postJob">
+                <div class="tab-pane fade <?= $activeTab === 'postJob' ? 'show active' : '' ?>" id="postJob">
                     <h5 class="fw-bold mb-4">Create a New Job</h5>
                     <form action="employer.php" method="POST" class="needs-validation" novalidate>
                         <div class="mb-3">
@@ -395,15 +412,15 @@ $jobsResult = EmployerClass::getJobsByEmployer($employerId, $search, '', '', '',
                         <div class="row">
                             <div class="col-md-4 mb-3">
                                 <label class="form-label fw-bold">Salary (PHP)</label>
-                                <input type="number" required name="salary" class="form-control" placeholder="Enter amount or range">
+                                <input type="number" required name="salary" class="form-control" placeholder="Enter amount">
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label class="form-label fw-bold">Max Number of Hires</label>
-                                <input type="number" required name="maxapplicants" class="form-control" value="1" min="1" required>
+                                <input type="number" required name="maxapplicants" class="form-control" value="1" min="1">
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label class="form-label fw-bold">Location</label>
-                                <input type="text" required name="location" class="form-control" placeholder="e.g. Makati or Remote">
+                                <input type="text" required name="location" class="form-control" placeholder="e.g. Makati City">
                             </div>
                         </div>
                         <div class="mb-4">

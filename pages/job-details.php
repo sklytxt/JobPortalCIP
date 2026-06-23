@@ -128,7 +128,7 @@ $hiredApplicants = EmployerClass::getHiredApplicants($jobId);
                             <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
                                 <div class="d-flex align-items-center gap-2">
                                     <div class="overflow-hidden d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; border-radius: 50%; background: #ddd;">
-                                        <?php if (!empty($hired['ProfileImagePath']) && file_exists("../uploads/".$hired['ProfileImagePath'])): ?>
+                                        <?php if (!empty($hired['ProfileImagePath']) && file_exists("../uploads/profile_img/" . $hired['ProfileImagePath'])): ?>
                                             <img src="../uploads/<?= htmlspecialchars($hired['ProfileImagePath']) ?>" style="width:100%; height:100%; object-fit:cover;">
                                         <?php else: ?>
                                             <span class="fw-bold text-secondary"><?= substr($hired['FullName'], 0, 1) ?></span>
@@ -156,7 +156,7 @@ $hiredApplicants = EmployerClass::getHiredApplicants($jobId);
                     <h6 class="fw-bold mb-3">Managed By</h6>
                     <div class="d-flex align-items-center gap-3 mb-3">
                         <div class="overflow-hidden d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; border-radius: 50%; background: #eee;">
-                            <?php if (!empty($job['ProfileImagePath']) && file_exists("../uploads/".$job['ProfileImagePath'])): ?>
+                            <?php if (!empty($job['ProfileImagePath']) && file_exists("../uploads/profil".$job['ProfileImagePath'])): ?>
                                 <img src="../uploads/<?= htmlspecialchars($job['ProfileImagePath']) ?>" style="width:100%; height:100%; object-fit:cover;">
                             <?php else: ?>
                                 <span class="fw-bold text-secondary"><?= substr($job['EmployerName'], 0, 1) ?></span>

@@ -86,7 +86,7 @@ class AuthClass
         $check->close();
 
         $password = password_hash($passwordRaw, PASSWORD_DEFAULT);
-        $uploadDir = "../uploads/";
+        $uploadDir = "../uploads/profile_img/";
         $fileName = null;
 
         if (isset($_FILES['profile_image']) && $_FILES['profile_image']['error'] === UPLOAD_ERR_OK) {

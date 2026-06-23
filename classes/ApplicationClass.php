@@ -1,0 +1,147 @@
+<?php
+
+class ApplicationClass
+{
+    private static function getConnection(): mysqli
+    {
+        $conn = new mysqli("localhost", "root", "", "jobdb");
+        if ($conn->connect_error) {
+            die("Connection failed: " . $conn->connect_error);
+        }
+        return $conn;
+    }
+
+    public static function apply(int $jobId, int $applicantId, array $file, string $portfolio = ''): true|string 
+    {
+        $conn = self::getConnection();
+
+        $roleStmt = $conn->prepare("SELECT Usertype FROM users WHERE UserID = ? LIMIT 1");
+        $roleStmt->bind_param("i", $applicantId);
+        $roleStmt->execute();
+        $user = $roleStmt->get_result()->fetch_assoc();
+        $roleStmt->close();
+
+        if ($user && strtolower($user['Usertype']) === 'employer') {
+            $conn->close();
+            return "Employers are not authorized to apply for job listings.";
+        }
+
+        if (self::hasApplied($jobId, $applicantId)) {
+            $conn->close();
+            return "You have already applied to this job.";
+        }
+
+        if (empty($file['name']) || $file['error'] !== UPLOAD_ERR_OK) {
+            $conn->close();
+            return "A resume file is required.";
+        }
+
+        $allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+        if (!in_array($file['type'], $allowedTypes)) {
+            $conn->close();
+            return "Resume must be a PDF or Word document (.pdf, .doc, .docx).";
+        }
+
+        if ($file['size'] > 5 * 1024 * 1024) {
+            $conn->close();
+            return "Resume file must be under 5MB.";
+        }
+
+        $jobStmt = $conn->prepare("SELECT Status, EmployerID FROM jobs WHERE JobID = ? LIMIT 1");
+        $jobStmt->bind_param("i", $jobId);
+        $jobStmt->execute();
+        $job = $jobStmt->get_result()->fetch_assoc();
+        $jobStmt->close();
+
+        if (!$job) {
+            $conn->close();
+            return "Job not found.";
+        }
+        if ($job['Status'] !== 'Open') {
+            $conn->close();
+            return "This job is no longer accepting applications.";
+        }
+
+        $resumeFileName = time() . '_' . $applicantId . '_' . basename($file['name']);
+        if (!move_uploaded_file($file['tmp_name'], '../uploads/resumes/' . $resumeFileName)) {
+            $conn->close();
+            return "Failed to upload resume. Please try again.";
+        }
+
+        $portfolioVal = !empty($portfolio) ? $portfolio : null;
+        $stmt = $conn->prepare("
+            INSERT INTO applications (JobID, ApplicantID, EmployerID, ResumePath, PortfolioPath, Status)
+            VALUES (?, ?, ?, ?, ?, 'Pending')
+        ");
+        $stmt->bind_param("iiiss", $jobId, $applicantId, $job['EmployerID'], $resumeFileName, $portfolioVal);
+        $success = $stmt->execute();
+        
+        $stmt->close();
+        $conn->close();
+
+        return $success ? true : "Database error. Please try again.";
+    }
+
+    public static function getApplicationsByUser(int $applicantId): array
+    {
+        $conn = self::getConnection();
+        $stmt = $conn->prepare("
+            SELECT a.*, j.JobTitle, j.JobType, j.WorkSetup, j.Location, u.FullName AS EmployerName, u.CompanyName
+            FROM applications a
+            JOIN jobs j ON a.JobID = j.JobID
+            JOIN users u ON j.EmployerID = u.UserID
+            WHERE a.ApplicantID = ?
+            ORDER BY a.AppliedDate DESC
+        ");
+        $stmt->bind_param("i", $applicantId);
+        $stmt->execute();
+        
+        $apps = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        
+        $stmt->close();
+        $conn->close();
+        return $apps;
+    }
+
+    public static function hasApplied(int $jobId, int $applicantId): bool
+    {
+        $conn = self::getConnection();
+        $stmt = $conn->prepare("SELECT ApplicationID FROM applications WHERE JobID = ? AND ApplicantID = ? LIMIT 1");
+        $stmt->bind_param("ii", $jobId, $applicantId);
+        $stmt->execute();
+        
+        $exists = $stmt->get_result()->fetch_assoc() !== null;
+        
+        $stmt->close();
+        $conn->close();
+        return $exists;
+    }
+
+    public static function withdrawApplication(int $appId, int $applicantId): bool
+    {
+        $conn = self::getConnection();
+        $stmt = $conn->prepare("DELETE FROM applications WHERE ApplicationID = ? AND ApplicantID = ?");
+        $stmt->bind_param("ii", $appId, $applicantId);
+        $success = $stmt->execute();
+        $stmt->close();
+        $conn->close();
+        return $success;
+    }
+
+    public static function getLatestApplicationStatus(int $jobId, int $applicantId): ?string 
+    {
+        $conn = self::getConnection();
+        // Fetch only the most recent status
+        $stmt = $conn->prepare("SELECT Status FROM applications WHERE JobID = ? AND ApplicantID = ? ORDER BY ApplicationID DESC LIMIT 1");
+        $stmt->bind_param("ii", $jobId, $applicantId);
+        $stmt->execute();
+        
+        $result = $stmt->get_result()->fetch_assoc();
+        $status = $result ? $result['Status'] : null;
+        
+        $stmt->close();
+        $conn->close();
+        
+        return $status;
+    }
+}
