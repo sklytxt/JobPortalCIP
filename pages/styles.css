@@ -1,0 +1,572 @@
+/* ====== login.php ====== */
+body {
+  font-family: 'Roboto', sans-serif;
+  margin: 0;
+  background-color: #ffffff;
+}
+
+.jobful-title {
+  font-family: 'Antonio', sans-serif;
+  font-size: 2.3rem;
+  font-weight: 700;
+  color: #0f3d2a;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.25rem;
+}
+
+@media (min-width: 768px) {
+  .login-visual-pane {
+    width: 60%;
+    min-height: 100vh;
+  }
+  .login-form-pane {
+    width: 40%;
+    min-height: 100vh;
+  }
+}
+
+.login-visual-pane {
+  display: none;
+  background: url('../bg_img/background.avif') center center / cover no-repeat;
+}
+
+.register-visual-pane {
+  display: none;
+  background: url('../bg_img/background1.jpg') center center / cover no-repeat;
+}
+
+@media (min-width: 768px) {
+  .login-visual-pane,
+  .register-visual-pane {
+    display: block;
+  }
+}
+
+.gradient-overlay {
+  background: linear-gradient(135deg, rgba(17, 66, 50, 0.82), rgba(46, 125, 50, 0.82));
+}
+
+/* NO-JS PASSWORD TOGGLE ENGINE */
+.password-field {
+  position: relative;
+}
+
+/* Mask the text as password dots by default */
+.no-js-password {
+  -webkit-text-security: disc !important;
+}
+
+/* Invisible checkbox that sits right over the eye icon to capture clicks */
+.password-checkbox {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2.5rem;
+  height: 2rem;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 3;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #999999;
+  padding: 0 0.5rem;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* UNMASK THE TEXT WHEN CHECKED */
+.password-checkbox:checked ~ .no-js-password {
+  -webkit-text-security: none !important;
+}
+
+/* Switch the eye icon styling when checked */
+.password-checkbox:checked + .password-toggle {
+  color: #2e7d32;
+}
+
+.password-checkbox:checked + .password-toggle .fa-eye::before {
+  content: "\f070";
+}
+
+/* Form Minimal Formatting */
+.form-control-minimal {
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 0.5rem 2.5rem 0.5rem 0;
+  outline: none;
+  background: transparent;
+  color: #333333;
+  font-size: 0.95rem;
+  transition: border-color 0.2s ease;
+}
+
+.form-control-minimal::placeholder {
+  color: #cccccc;
+  opacity: 1;
+}
+
+.form-control-minimal:focus {
+  border-bottom: 2px solid #2e7d32;
+}
+
+/* Buttons and Links */
+.btn-gradient {
+  background: linear-gradient(to right, #2e7d32, #4caf50);
+  color: #ffffff;
+  border: none;
+  border-radius: 50px;
+  padding: 0.55rem 2.5rem;
+  font-size: 0.9rem;
+  box-shadow: 0 4px 12px rgba(46, 125, 50, 0.2);
+  transition: opacity 0.2s ease;
+}
+
+.btn-gradient:hover {
+  opacity: 0.9;
+  color: #ffffff;
+}
+
+.text-muted-custom {
+  color: #999999;
+  font-size: 0.85rem;
+}
+
+.link-dark-custom {
+  color: #333333;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: color 0.2s ease;
+}
+
+.link-dark-custom:hover {
+  color: #2e7d32;
+  text-decoration: underline;
+}
+
+.form-check-input:checked {
+  background-color: #2e7d32;
+  border-color: #2e7d32;
+}
+
+.form-check-input:focus {
+  border-color: #4caf50;
+  box-shadow: 0 0 0 0.25rem rgba(46, 125, 50, 0.25);
+}
+
+
+/* ====== Centered Layout & Pure CSS Student Toggle ====== */
+.centered-bg-wrapper {
+  position: relative;
+  min-height: 100vh;
+}
+
+.register-card-centered {
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  z-index: 5;
+  width: 100%;
+  max-width: 460px;
+}
+
+.student-toggle-container {
+  position: relative;
+  display: inline-block;
+}
+
+.student-checkbox {
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  z-index: 3;
+}
+
+.student-toggle-label {
+  border: 1px dashed #2e7d32;
+  background: transparent;
+  color: #2e7d32;
+  font-size: 0.8rem;
+  border-radius: 20px;
+  padding: 0.2rem 0.75rem;
+  transition: all 0.2s ease;
+  display: inline-block;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.centered-bg-wrapper {
+  position: relative;
+  min-height: 100vh;
+}
+
+.register-card-centered {
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  z-index: 5;
+  width: 100%;
+  max-width: 780px;
+}
+
+/* ====== home.php Solid Green Redesign Layout ====== */
+body.home-page-body {
+  background: linear-gradient(180deg, #f4faf6 0%, #ebf5ee 45%, #ffffff 100%);
+}
+
+.bg-green {
+  background-color: #0f3d2a !important;
+}
+
+.navbar {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+/* White Custom Inner Search Input */
+.nav-search-box {
+  width: 220px;
+}
+
+.nav-search-box .input-group {
+  background-color: rgba(255, 255, 255, 0.15) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+.search-placeholder-white::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Stacked White Navigation Link Layout Elements */
+.column-nav .nav-link {
+  padding-top: 0.65rem !important;
+  padding-bottom: 0.65rem !important;
+  color: rgba(255, 255, 255, 0.65) !important;
+  position: relative;
+  transition: color 0.2s ease, opacity 0.2s ease;
+}
+
+.column-nav .nav-label {
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.column-nav .nav-link:hover, 
+.column-nav .nav-link.active {
+  color: #ffffff !important;
+  opacity: 1;
+}
+
+/* White Underline Indicators */
+@media (min-width: 992px) {
+  .column-nav .nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background-color: transparent;
+    transition: background-color 0.2s ease;
+  }
+  
+  .column-nav .nav-link.active::after,
+  .column-nav .nav-link:hover::after {
+    background-color: #ffffff;
+  }
+  
+  .border-start-lg {
+    border-left: 1px solid rgba(255, 255, 255, 0.15);
+  }
+}
+
+.nav-link-profile {
+  font-size: 0.72rem;
+  transition: opacity 0.2s ease;
+}
+
+.nav-link-profile:hover {
+  opacity: 0.85;
+}
+
+/* Standard profile component items adjustments */
+.upgrade-banner {
+  background: #ffffff;
+  border: 1px dashed #a7f3d0;
+  border-radius: 12px;
+}
+
+.avatar-sm {
+  width: 32px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  border-radius: 50%;
+}
+
+.avatar-lg {
+  width: 48px;
+  height: 48px;
+  background: #0f3d2a;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.2rem;
+  border-radius: 50%;
+}
+
+.search-shell {
+  background: #ffffff;
+  border: 1px solid #e2e8f0 !important;
+}
+
+.job-card {
+  border-radius: 12px;
+  border: 1px solid transparent;
+}
+
+.job-card--lavender {
+  background: linear-gradient(145deg, #f0fdf4 0%, #d1fae5 100%);
+  border-color: #a7f3d0;
+}
+
+.job-card--rose {
+  background: linear-gradient(145deg, #f0fdf4 0%, #ecfdf5 100%);
+  border-color: #bbf7d0;
+}
+
+.badge-soft {
+  padding: 0.35rem 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 6px;
+  display: inline-block;
+}
+.badge-soft.blue { background: #e0f2fe; color: #0369a1; }
+.badge-soft.green { background: #dcfce7; color: #15803d; }
+.badge-soft.amber { background: #fef3c7; color: #b45309; }
+
+.pill-tag {
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(46, 125, 50, 0.15);
+  padding: 0.25rem 0.75rem;
+  font-size: 0.8rem;
+  color: #0f3d2a;
+  border-radius: 50px;
+}
+
+.section-title {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  color: #2e7d32;
+}
+
+.small-note { font-size: 0.85rem; }
+
+.btn-primary-custom {
+  background-color: #0f3d2a;
+  color: #ffffff;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 0.4rem 1rem;
+  border: none;
+}
+
+.btn-outline-custom {
+  background-color: transparent;
+  color: #0f3d2a;
+  border: 1px solid #0f3d2a;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 0.4rem 1rem;
+  transition: all 0.2s ease;
+}
+
+.btn-outline-custom:hover {
+  background-color: #0f3d2a;
+  color: #ffffff;
+}
+
+/* Standard profile component items adjustments */
+.upgrade-banner {
+  background: #ffffff;
+  border: 1px dashed #a7f3d0;
+  border-radius: 12px;
+}
+
+.avatar-sm {
+  width: 32px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  border-radius: 50%;
+}
+
+.avatar-lg {
+  width: 48px;
+  height: 48px;
+  background: #0f3d2a;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.2rem;
+  border-radius: 50%;
+}
+
+.search-shell {
+  background: #ffffff;
+  border: 1px solid #e2e8f0 !important;
+}
+
+.job-card {
+  border-radius: 12px;
+  border: 1px solid transparent;
+}
+
+.job-card--lavender {
+  background: linear-gradient(145deg, #f0fdf4 0%, #d1fae5 100%);
+  border-color: #a7f3d0;
+}
+
+.job-card--rose {
+  background: linear-gradient(145deg, #f0fdf4 0%, #ecfdf5 100%);
+  border-color: #bbf7d0;
+}
+
+.badge-soft {
+  padding: 0.35rem 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 6px;
+  display: inline-block;
+}
+.badge-soft.blue { background: #e0f2fe; color: #0369a1; }
+.badge-soft.green { background: #dcfce7; color: #15803d; }
+.badge-soft.amber { background: #fef3c7; color: #b45309; }
+
+.pill-tag {
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(46, 125, 50, 0.15);
+  padding: 0.25rem 0.75rem;
+  font-size: 0.8rem;
+  color: #0f3d2a;
+  border-radius: 50px;
+}
+
+.section-title {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  color: #2e7d32;
+}
+
+.small-note { font-size: 0.85rem; }
+
+.btn-primary-custom {
+  background-color: #0f3d2a;
+  color: #ffffff;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 0.4rem 1rem;
+  border: none;
+}
+
+.btn-outline-custom {
+  background-color: transparent;
+  color: #0f3d2a;
+  border: 1px solid #0f3d2a;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 0.4rem 1rem;
+  transition: all 0.2s ease;
+}
+
+.btn-outline-custom:hover {
+  background-color: #0f3d2a;
+  color: #ffffff;
+}
+
+/* ====== Footer Custom Styles ====== */
+.text-green {
+  color: #0f3d2a !important;
+}
+
+.footer-custom {
+  background-color: #ffffff;
+  border-color: #e2e8f0 !important;
+}
+
+.footer-link {
+  transition: color 0.2s ease, text-decoration 0.2s ease;
+}
+
+.footer-link:hover {
+  color: #2e7d32 !important;
+  text-decoration: underline !important;
+}
+/* Overrides Bootstrap's automatic Scrollspy blue highlight with corporate green */
+.custom-corporate-list .list-group-item.active {
+  background-color: #198754 !important; /* Bootstrap success green */
+  border-color: #198754 !important;
+  color: #ffffff !important;
+}
+
+.job-row {
+  transition: box-shadow 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
+}
+ 
+.job-row-link:hover .job-row {
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.08) !important;
+  border-color: var(--bs-success-border-subtle, #a3cfbb) !important;
+  transform: translateY(-1px);
+}
+ 
+.job-row-link {
+  display: block;
+}
+ 
+.filter-panel {
+  position: sticky;
+  top: 90px;
+}
+ 
+.structural-badge {
+  font-weight: 500;
+  font-size: 0.72rem;
+}
+ 
+@media (max-width: 991px) {
+  .filter-panel {
+    position: static;
+  }
+}
+
