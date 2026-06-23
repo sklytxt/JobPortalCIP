@@ -27,9 +27,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_application'])
     $jobId = (int)$_POST['job_id'];
     $portfolio = trim($_POST['portfolio_path'] ?? '');
     $resumeFile = $_FILES['resume'] ?? null;
+    $coverLetterFile = $_FILES['coverletter'] ?? null;
 
-    if ($resumeFile) {
-        $result = ApplicationClass::apply($jobId, $_SESSION['user_id'], $resumeFile, $portfolio);
+    if (empty($resumeFile['name'])) {
+        $alertMessage = "Please upload a valid resume file.";
+        $alertClass = "alert-danger";
+    } elseif (empty($coverLetterFile['name'])) {
+        $alertMessage = "Please upload a valid cover letter file.";
+        $alertClass = "alert-danger";
+    } else {
+        $result = ApplicationClass::apply($jobId, $_SESSION['user_id'], $resumeFile, $coverLetterFile, $portfolio);
         if ($result === true) {
             $alertMessage = "Application submitted successfully!";
             $alertClass = "alert-success";
@@ -37,9 +44,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_application'])
             $alertMessage = $result;
             $alertClass = "alert-danger";
         }
-    } else {
-        $alertMessage = "Please upload a valid resume file.";
-        $alertClass = "alert-danger";
     }
 }
 
@@ -336,7 +340,7 @@ $queryParams = $_GET;
     <div class="modal fade" id="applyJobModal" isset-id="-1" tabindex="-1" aria-labelledby="applyJobModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow">
-                <form action="job-list.php" method="POST" enctype="multipart/form-data">
+                <form action="job-list.php" method="POST" enctype="multipart/form-data" onsubmit="return validateApplyForm(this);">
                     <div class="modal-header bg-green text-white py-3">
                         <h5 class="modal-title fw-bold" id="applyJobModalLabel">Job Application Form</h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -354,7 +358,13 @@ $queryParams = $_GET;
 
                         <div class="mb-3">
                             <label class="form-label small fw-bold mb-1">Upload Resume (.pdf, .doc, .docx) <span class="text-danger">*</span></label>
-                            <input type="file" name="resume" class="form-control form-control-sm" required>
+                            <input type="file" name="resume" class="form-control form-control-sm" accept=".pdf,.doc,.docx" required>
+                            <div class="form-text extra-small-text">Maximum upload file capacity: 5MB</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold mb-1">Upload Cover Letter (.pdf, .doc, .docx) <span class="text-danger">*</span></label>
+                            <input type="file" name="coverletter" class="form-control form-control-sm" accept=".pdf,.doc,.docx" required>
                             <div class="form-text extra-small-text">Maximum upload file capacity: 5MB</div>
                         </div>
 
@@ -412,6 +422,30 @@ $queryParams = $_GET;
                 modalJobTitleSpan.textContent = jobTitle;
                 modalCompanyNameSpan.textContent = companyName;
             });
+
+            // Reset the whole form (resume, cover letter, portfolio) each time the modal closes
+            applyJobModal.addEventListener('hidden.bs.modal', () => {
+                const form = applyJobModal.querySelector('form');
+                if (form) form.reset();
+            });
+        }
+
+        // Client-side guard: blocks submission if either required file is missing.
+        // The PHP-side checks in ApplicationClass::apply() are the real safety net.
+        function validateApplyForm(form) {
+            const resumeInput = form.elements['resume'];
+            if (!resumeInput || resumeInput.files.length === 0) {
+                alert('Please upload a resume file before submitting.');
+                if (resumeInput) resumeInput.focus();
+                return false;
+            }
+            const coverLetterInput = form.elements['coverletter'];
+            if (!coverLetterInput || coverLetterInput.files.length === 0) {
+                alert('Please upload a cover letter file before submitting.');
+                if (coverLetterInput) coverLetterInput.focus();
+                return false;
+            }
+            return true;
         }
     </script>
 </body>

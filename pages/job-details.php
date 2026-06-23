@@ -15,6 +15,8 @@ if (!isset($_GET['id'])) {
 }
 
 $user = UserClass::getUserById($_SESSION['user_id']); // Fetching user to verify role
+
+$dashboardUrl = ($user['Usertype'] === 'jobseeker') ? 'my-jobs.php' : 'employer.php';
 $jobId = $_GET['id'];
 $job = EmployerClass::getJobDetails($jobId);
 
@@ -66,10 +68,11 @@ $hiredApplicants = EmployerClass::getHiredApplicants($jobId);
         <p class="text-secondary mb-0">Reviewing: <?= htmlspecialchars($job['JobTitle']) ?></p>
       </div>
 
-   <div class="card p-4 border-0 shadow-sm">
-    <a href="employer.php" class="btn btn-sm btn-outline-secondary mb-4" style="width: fit-content;">
+  <div class="card p-4 border-0 shadow-sm">
+    <a href="<?= $dashboardUrl ?>" class="btn btn-sm btn-outline-secondary mb-4" style="width: fit-content;">
         <i class="fa fa-arrow-left"></i> Back to Dashboard
     </a>
+    
     
     <h3 class="fw-bold text-dark"><?= htmlspecialchars($job['JobTitle']) ?></h3>
     <p class="h4 text-primary fw-bold mt-2 mb-4">₱<?= number_format($job['Salary'], 2) ?></p>

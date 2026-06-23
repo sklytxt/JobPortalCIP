@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$alreadyApplied) {
         $jobId,
         $_SESSION['user_id'],
         $_FILES['resume'],
-        $portfolio
+        $_FILES['coverletter'],
     );
 
     if ($result === true) {

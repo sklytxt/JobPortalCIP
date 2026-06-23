@@ -13,40 +13,128 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_job'])) {
+    $jobId = $_POST['update_job_id'];
+    $employerId = $_SESSION['user_id'];
+    
+    // Prepare the data array
+    $data = [
+        'title'           => $_POST['title'],
+        'description'     => $_POST['description'],
+        'salary'          => $_POST['salary'],
+        'jobType'         => $_POST['jobType'],
+        'workSetup'       => $_POST['workSetup'],
+        'experienceLevel' => $_POST['experienceLevel'],
+        'location'        => $_POST['location']
+    ];
+
+    // Use your existing class method
+    if (EmployerClass::updateJob($jobId, $employerId, $data)) {
+        // Redirect to prevent form resubmission on refresh
+        header("Location: employer.php?tab=manageJobs&status=success");
+        exit;
+    } else {
+        $errorMessage = "Failed to update job.";
+    }
+}
+
 $user = UserClass::getUserById($_SESSION['user_id']);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['jobtitle'])) {
-    $status = EmployerClass::postJob(
-        $_SESSION['user_id'],
-        $_POST['jobtitle'],
-        $_POST['description'],
-        $_POST['salary'],
-        $_POST['jobtype'],
-        $_POST['worksetup'],
-        $_POST['experiencelevel'],
-        $_POST['location'],
-        $_POST['maxapplicants']
-    );
 
-    if ($status === true) {
-        echo "<script>alert('Job Posted Successfully!'); window.location='employer.php';</script>";
+    // Trim everything first so whitespace-only values are treated as blank
+    $jobtitle        = trim($_POST['jobtitle'] ?? '');
+    $description     = trim($_POST['description'] ?? '');
+    $salary           = trim($_POST['salary'] ?? '');
+    $jobtype          = trim($_POST['jobtype'] ?? '');
+    $worksetup        = trim($_POST['worksetup'] ?? '');
+    $experiencelevel  = trim($_POST['experiencelevel'] ?? '');
+    $location         = trim($_POST['location'] ?? '');
+    $maxapplicants    = trim($_POST['maxapplicants'] ?? '');
+
+    $errors = [];
+
+    if ($jobtitle === '') {
+        $errors[] = 'Job Title is required.';
+    }
+    if ($description === '') {
+        $errors[] = 'Job Description is required.';
+    }
+    if ($salary === '') {
+        $errors[] = 'Salary is required.';
+    } elseif (!is_numeric($salary) || (float)$salary <= 0) {
+        $errors[] = 'Salary must be a valid number greater than 0.';
+    }
+    if ($jobtype === '') {
+        $errors[] = 'Job Type is required.';
+    }
+    if ($worksetup === '') {
+        $errors[] = 'Work Setup is required.';
+    }
+    if ($experiencelevel === '') {
+        $errors[] = 'Experience Level is required.';
+    }
+    if ($location === '') {
+        $errors[] = 'Location is required.';
+    }
+    if ($maxapplicants === '') {
+        $errors[] = 'Max Number of Hires is required.';
+    } elseif (!ctype_digit($maxapplicants) || (int)$maxapplicants < 1) {
+        $errors[] = 'Max Number of Hires must be a whole number of at least 1.';
+    }
+
+    if (!empty($errors)) {
+        $errorMsg = addslashes(implode('\n', $errors));
+        echo "<script>alert('" . $errorMsg . "'); window.location='employer.php?tab=postJob';</script>";
     } else {
-        echo "<script>alert('$status');</script>";
+        $status = EmployerClass::postJob(
+            $_SESSION['user_id'],
+            $jobtitle,
+            $description,
+            $salary,
+            $jobtype,
+            $worksetup,
+            $experiencelevel,
+            $location,
+            $maxapplicants
+        );
+
+        if ($status === true) {
+            echo "<script>alert('Job Posted Successfully!'); window.location='employer.php';</script>";
+        } else {
+            echo "<script>alert('$status');</script>";
+        }
     }
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['appid']) && isset($_POST['status'])) {
-    if ($_POST['status'] == 'Accepted') {
-        $jobId = $_POST['jobid'];
-        EmployerClass::acceptApplicant($_POST['appid'], $jobId);
+    $appid  = trim($_POST['appid'] ?? '');
+    $jobid  = trim($_POST['jobid'] ?? '');
+    $status = trim($_POST['status'] ?? '');
+
+    if ($appid === '' || $status === '') {
+        echo "<script>alert('Invalid request. Please try again.'); window.location='employer.php?tab=applicants';</script>";
     } else {
-        EmployerClass::updateApplicationStatus($_POST['appid'], 'Rejected');
+        if ($status == 'Accepted') {
+            if ($jobid === '') {
+                echo "<script>alert('Invalid job reference.'); window.location='employer.php?tab=applicants';</script>";
+            } else {
+                EmployerClass::acceptApplicant($appid, $jobid);
+                echo "<script>alert('Status Updated!'); window.location='employer.php';</script>";
+            }
+        } else {
+            EmployerClass::updateApplicationStatus($appid, 'Rejected');
+            echo "<script>alert('Status Updated!'); window.location='employer.php';</script>";
+        }
     }
-    echo "<script>alert('Status Updated!'); window.location='employer.php';</script>";
 }
 
 if (isset($_POST['delete_job_id'])) {
-    if (EmployerClass::deleteJob($_POST['delete_job_id'], $_SESSION['user_id'])) {
+    $deleteJobId = trim($_POST['delete_job_id'] ?? '');
+
+    if ($deleteJobId === '') {
+        echo "<script>alert('Invalid job selected for deletion.'); window.location='employer.php';</script>";
+    } elseif (EmployerClass::deleteJob($deleteJobId, $_SESSION['user_id'])) {
         echo "<script>alert('Job deleted successfully.'); window.location='employer.php';</script>";
     } else {
         echo "<script>alert('Failed to delete job.');</script>";
@@ -220,6 +308,7 @@ $totalPages = ceil($totalJobs / $limit);
                                     <th>Applied For</th>
                                     <th>Date Applied</th>
                                     <th>Resume</th>
+                                    <th>Cover Letter</th>
                                     <th>Portfolio</th>
                                     <th>Action</th>
                                 </tr>
@@ -236,6 +325,13 @@ $totalPages = ceil($totalJobs / $limit);
                                     <td><?= date('M d, Y', strtotime($app['AppliedDate'])) ?></td>
                                     <td><a href="../uploads/resumes/<?= htmlspecialchars($app['ResumePath']) ?>" target="_blank" class="btn btn-sm btn-outline-success">Download</a></td>
                                     <td>
+                                        <?php if (!empty($app['coverletter'])): ?>
+                                            <a href="../uploads/coverletter/<?= htmlspecialchars($app['coverletter']) ?>" target="_blank" class="btn btn-sm btn-outline-info">Download</a>
+                                        <?php else: ?>
+                                            N/A
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
                                         <?php if (!empty($app['PortfolioPath'])): ?>
                                             <a href="<?= htmlspecialchars($app['PortfolioPath']) ?>" target="_blank"><?= htmlspecialchars($app['PortfolioPath']) ?></a>
                                         <?php else: ?>
@@ -250,6 +346,7 @@ $totalPages = ceil($totalJobs / $limit);
                                                 <button name="status" value="Accepted" class="btn btn-sm btn-success me-1">Accept</button>
                                                 <button name="status" value="Rejected" class="btn btn-sm btn-danger">Reject</button>
                                             </form>
+                                            
                                         <?php else: ?>
                                             <span class="badge <?= $app['Status'] == 'Accepted' ? 'bg-success' : 'bg-danger' ?>">
                                                 <?= $app['Status'] ?>
@@ -261,7 +358,7 @@ $totalPages = ceil($totalJobs / $limit);
                                     endwhile; 
                                 else:
                                 ?>
-                                <tr><td colspan="6" class="text-center text-muted py-3">No applicants found.</td></tr>
+                                <tr><td colspan="7" class="text-center text-muted py-3">No applicants found.</td></tr>
                                 <?php endif; ?>
                             </tbody>
                         </table>
@@ -317,70 +414,113 @@ $totalPages = ceil($totalJobs / $limit);
                         </div>
                     </form>
 
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle">
-                            <thead>
-                                <tr>
-                                    <th>Job Title</th>
-                                    <th>Experience</th>
-                                    <th>Type/Setup</th>
-                                    <th>Salary</th>
-                                    <th>Location</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php
-                                $jobs = EmployerClass::getJobsByEmployer($_SESSION['user_id'], $jobSearch, $expFilter, $typeFilter, $setupFilter, $salaryFilter, $locationFilter, $limit, $offset);
-                                if ($jobs && $jobs->num_rows > 0):
-                                    while ($job = $jobs->fetch_assoc()):
-                                        $isFilled = ($job['Status'] === 'Filled');
-                                        $statusClass = $isFilled ? 'text-danger' : 'text-success';
-                                ?>
-                                <tr>
-                                    <td>
-                                        <div class="fw-bold text-dark"><?= htmlspecialchars($job['JobTitle']) ?></div>
-                                        <small class="text-muted">
-                                            Status: <span class="<?= $statusClass ?> fw-bold"><?= htmlspecialchars($job['Status']) ?></span>
-                                        </small>
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-secondary-subtle text-secondary"><?= htmlspecialchars($job['ExperienceLevel']) ?></span>
-                                    </td>
-                                    <td>
-                                        <div><?= htmlspecialchars($job['JobType']) ?></div>
-                                        <small class="text-muted"><?= htmlspecialchars($job['WorkSetup']) ?></small>
-                                    </td>
-                                    <td class="fw-bold">₱ <?= number_format((float)$job['Salary'], 2) ?></td>
-                                    <td><?= htmlspecialchars($job['Location']) ?></td>
-                                    <td>
-                                        <div class="d-flex gap-2">
-                                            <a href="job-details.php?id=<?= $job['JobID'] ?>" class="btn btn-sm btn-outline-primary">
-                                                <i class="fa fa-eye"></i>
-                                            </a>
-                                            <form method="POST" onsubmit="return confirm('Are you sure you want to delete this job? This action cannot be undone.');">
-                                                <input type="hidden" name="delete_job_id" value="<?= $job['JobID'] ?>">
-                                                <button type="submit" class="btn btn-sm btn-outline-danger">
-                                                    <i class="fa fa-trash"></i>
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <?php 
-                                    endwhile;
-                                else: 
-                                ?>
-                                <tr><td colspan="6" class="text-center text-muted py-3">No posted jobs found.</td></tr>
-                                <?php endif; ?>
-                            </tbody>
-                        </table>
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
+        <thead>
+            <tr>
+                <th>Job Title</th>
+                <th>Experience</th>
+                <th>Type/Setup</th>
+                <th>Salary</th>
+                <th>Location</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php
+            $jobs = EmployerClass::getJobsByEmployer($_SESSION['user_id'], $jobSearch, $expFilter, $typeFilter, $setupFilter, $salaryFilter, $locationFilter, $limit, $offset);
+            if ($jobs && $jobs->num_rows > 0):
+                while ($job = $jobs->fetch_assoc()):
+                    $isFilled = ($job['Status'] === 'Filled');
+                    $statusClass = $isFilled ? 'text-danger' : 'text-success';
+            ?>
+            <tr>
+                <td>
+                    <div class="fw-bold text-dark"><?= htmlspecialchars($job['JobTitle']) ?></div>
+                    <small class="text-muted">Status: <span class="<?= $statusClass ?> fw-bold"><?= htmlspecialchars($job['Status']) ?></span></small>
+                </td>
+                <td><span class="badge bg-secondary-subtle text-secondary"><?= htmlspecialchars($job['ExperienceLevel']) ?></span></td>
+                <td>
+                    <div><?= htmlspecialchars($job['JobType']) ?></div>
+                    <small class="text-muted"><?= htmlspecialchars($job['WorkSetup']) ?></small>
+                </td>
+                <td class="fw-bold">₱ <?= number_format((float)$job['Salary'], 2) ?></td>
+                <td><?= htmlspecialchars($job['Location']) ?></td>
+                <td>
+                    <div class="d-flex gap-2">
+                        <a href="job-details.php?id=<?= $job['JobID'] ?>" class="btn btn-sm btn-outline-primary"><i class="fa fa-eye"></i></a>
+                        
+                        <form method="POST" onsubmit="return confirm('Delete this job?');">
+                            <input type="hidden" name="delete_job_id" value="<?= $job['JobID'] ?>">
+                            <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fa fa-trash"></i></button>
+                        </form>
+
+                        <button type="button" class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#editModal<?= $job['JobID'] ?>">
+                            <i class="fa fa-edit"></i>
+                        </button>
                     </div>
-                </div>
+
+                    <div class="modal fade" id="editModal<?= $job['JobID'] ?>" tabindex="-1">
+                        <div class="modal-dialog">
+                            <form method="POST">
+                                <div class="modal-content">
+                                    <div class="modal-header"><h5 class="modal-title">Edit: <?= htmlspecialchars($job['JobTitle']) ?></h5></div>
+                                    <div class="modal-body text-start">
+                                        <input type="hidden" name="update_job_id" value="<?= $job['JobID'] ?>">
+                                        
+                                        <div class="mb-2"><label class="fw-bold">Title</label><input type="text" name="title" class="form-control" value="<?= htmlspecialchars($job['JobTitle']) ?>" required></div>
+                                        <div class="mb-2"><label class="fw-bold">Description</label><textarea name="description" class="form-control" rows="3"><?= htmlspecialchars($job['Description']) ?></textarea></div>
+                                        <div class="mb-2"><label class="fw-bold">Salary (PHP)</label><input type="number" name="salary" class="form-control" value="<?= (int)$job['Salary'] ?>"></div>
+
+                                        <div class="mb-2">
+                                            <label class="fw-bold">Experience Level</label>
+                                            <select name="experienceLevel" class="form-select" required>
+                                                <option value="Entry-Level" <?= $job['ExperienceLevel'] === 'Entry-Level' ? 'selected' : '' ?>>Entry-Level</option>
+                                                <option value="Mid-Level" <?= $job['ExperienceLevel'] === 'Mid-Level' ? 'selected' : '' ?>>Mid-Level</option>
+                                                <option value="Senior-Level" <?= $job['ExperienceLevel'] === 'Senior-Level' ? 'selected' : '' ?>>Senior-Level</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="mb-2">
+                                            <label class="fw-bold">Job Type</label>
+                                            <select name="jobType" class="form-select" required>
+                                                <option value="Full-Time" <?= $job['JobType'] === 'Full-Time' ? 'selected' : '' ?>>Full-Time</option>
+                                                <option value="Part-Time" <?= $job['JobType'] === 'Part-Time' ? 'selected' : '' ?>>Part-Time</option>
+                                                <option value="Contract" <?= $job['JobType'] === 'Contract' ? 'selected' : '' ?>>Contract</option>
+                                                <option value="Internship" <?= $job['JobType'] === 'Internship' ? 'selected' : '' ?>>Internship</option>
+                                                <option value="Freelance" <?= $job['JobType'] === 'Freelance' ? 'selected' : '' ?>>Freelance</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="mb-2">
+                                            <label class="fw-bold">Work Setup</label>
+                                            <select name="workSetup" class="form-select" required>
+                                                <option value="On-Site" <?= $job['WorkSetup'] === 'On-Site' ? 'selected' : '' ?>>On-Site</option>
+                                                <option value="Remote" <?= $job['WorkSetup'] === 'Remote' ? 'selected' : '' ?>>Remote</option>
+                                                <option value="Hybrid" <?= $job['WorkSetup'] === 'Hybrid' ? 'selected' : '' ?>>Hybrid</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="mb-2"><label class="fw-bold">Location</label><input type="text" name="location" class="form-control" value="<?= htmlspecialchars($job['Location']) ?>"></div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                        <button type="submit" name="update_job" class="btn btn-primary">Save Changes</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+            <?php endwhile; endif; ?>
+        </tbody>
+    </table>
+</div>
 
                 <div class="tab-pane fade <?= $activeTab === 'postJob' ? 'show active' : '' ?>" id="postJob">
                     <h5 class="fw-bold mb-4">Create a New Job</h5>
-                    <form action="employer.php" method="POST" class="needs-validation" novalidate>
+                    <form action="employer.php" method="POST" class="needs-validation" novalidate onsubmit="return validatePostJobForm(this);">
                         <div class="mb-3">
                             <label class="form-label fw-bold">Job Title</label>
                             <input type="text" name="jobtitle" class="form-control" placeholder="e.g. Senior Frontend Developer" required>
@@ -389,6 +529,7 @@ $totalPages = ceil($totalJobs / $limit);
                             <div class="col-md-4 mb-3">
                                 <label class="form-label fw-bold">Job Type</label>
                                 <select name="jobtype" class="form-select" required>
+                                    <option value="" disabled selected>Select job type</option>
                                     <option value="Full-Time">Full-Time</option>
                                     <option value="Part-Time">Part-Time</option>
                                     <option value="Contract">Contract</option>
@@ -398,6 +539,7 @@ $totalPages = ceil($totalJobs / $limit);
                             <div class="col-md-4 mb-3">
                                 <label class="form-label fw-bold">Work Setup</label>
                                 <select name="worksetup" class="form-select" required>
+                                    <option value="" disabled selected>Select work setup</option>
                                     <option value="On-Site">On-Site</option>
                                     <option value="Remote">Remote</option>
                                     <option value="Hybrid">Hybrid</option>
@@ -406,6 +548,7 @@ $totalPages = ceil($totalJobs / $limit);
                             <div class="col-md-4 mb-3">
                                 <label class="form-label fw-bold">Experience</label>
                                 <select name="experiencelevel" class="form-select" required>
+                                    <option value="" disabled selected>Select experience level</option>
                                     <option value="Entry-Level">Entry-Level</option>
                                     <option value="Mid-Level">Mid-Level</option>
                                     <option value="Senior-Level">Senior-Level</option>
@@ -415,11 +558,11 @@ $totalPages = ceil($totalJobs / $limit);
                         <div class="row">
                             <div class="col-md-4 mb-3">
                                 <label class="form-label fw-bold">Salary (PHP)</label>
-                                <input type="number" required name="salary" class="form-control" placeholder="Enter amount">
+                                <input type="number" required name="salary" class="form-control" placeholder="Enter amount" min="1" step="0.01">
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label class="form-label fw-bold">Max Number of Hires</label>
-                                <input type="number" required name="maxapplicants" class="form-control" value="1" min="1">
+                                <input type="number" required name="maxapplicants" class="form-control" value="1" min="1" step="1">
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label class="form-label fw-bold">Location</label>
@@ -459,5 +602,32 @@ $totalPages = ceil($totalJobs / $limit);
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Client-side guard: catches blank / whitespace-only values before the request
+        // even leaves the browser. The PHP-side checks above are the real safety net,
+        // since this can be bypassed by anyone submitting the form directly.
+        function validatePostJobForm(form) {
+            const fields = ['jobtitle', 'description', 'salary', 'jobtype', 'worksetup', 'experiencelevel', 'location', 'maxapplicants'];
+            for (const fieldName of fields) {
+                const field = form.elements[fieldName];
+                if (!field || field.value.trim() === '') {
+                    alert('Please fill in all fields. Blank values are not allowed.');
+                    if (field) field.focus();
+                    return false;
+                }
+            }
+            if (parseFloat(form.elements['salary'].value) <= 0) {
+                alert('Salary must be greater than 0.');
+                form.elements['salary'].focus();
+                return false;
+            }
+            if (parseInt(form.elements['maxapplicants'].value, 10) < 1) {
+                alert('Max Number of Hires must be at least 1.');
+                form.elements['maxapplicants'].focus();
+                return false;
+            }
+            return true;
+        }
+    </script>
 </body>
 </html>

@@ -39,73 +39,106 @@ class AuthClass
     }
 
     public static function register()
-    {
-        $conn = self::getDb();
+{
+    $conn = self::getDb();
+    
+    $name = trim($_POST['name'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $passwordRaw = $_POST['password'] ?? '';
+    $confirm = $_POST['confirm_password'] ?? '';
+    $location = trim($_POST['location'] ?? '');
+    $contact = trim($_POST['contact_number'] ?? '');
+    $usertype = $_POST['usertype'] ?? null;
 
-        $name = trim($_POST['name'] ?? '');
-        $email = trim($_POST['email'] ?? '');
-        $passwordRaw = $_POST['password'] ?? '';
-        $confirm = $_POST['confirm_password'] ?? '';
-        $location = trim($_POST['location'] ?? '');
-        $contact = trim($_POST['contact_number'] ?? '');
-        $usertype = $_POST['usertype'] ?? null;
+    $jobTitle = ($usertype === 'jobseeker') ? trim($_POST['job_title'] ?? '') : null;
+    $companyName = ($usertype === 'employer') ? trim($_POST['company_name'] ?? '') : null;
 
-        $jobTitle = ($usertype === 'jobseeker') ? trim($_POST['job_title'] ?? '') : null;
-        $companyName = ($usertype === 'employer') ? trim($_POST['company_name'] ?? '') : null;
-        if ($jobTitle === '') $jobTitle = null;
-        if ($companyName === '') $companyName = null;
+    if ($jobTitle === '') $jobTitle = null;
+    if ($companyName === '') $companyName = null;
 
-        if (!preg_match("/^[a-zA-Z ]+$/", $name)) {
-            return "Name can only contain letters and spaces.";
-        }
-
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            return "Invalid email address.";
-        }
-
-        if (!preg_match("/^\d{11}$/", $contact)) {
-            return "Contact number must be exactly 11 digits.";
-        }
-
-        if (!preg_match("/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/", $passwordRaw)) {
-            return "Password must be at least 8 characters and contain uppercase, lowercase, and a number.";
-        }
-
-        if ($passwordRaw !== $confirm) {
-            return "Password does not match.";
-        }
-
-        $check = $conn->prepare("SELECT UserID FROM users WHERE Email=?");
-        $check->bind_param("s", $email);
-        $check->execute();
-        $check->store_result();
-        if ($check->num_rows > 0) {
-            $check->close();
-            return "Email already exists";
-        }
-        $check->close();
-
-        $password = password_hash($passwordRaw, PASSWORD_DEFAULT);
-        $uploadDir = "../uploads/profile_img/";
-        $fileName = null;
-
-        if (isset($_FILES['profile_image']) && $_FILES['profile_image']['error'] === UPLOAD_ERR_OK) {
-            $fileName = time() . "_" . basename($_FILES['profile_image']['name']);
-            move_uploaded_file($_FILES['profile_image']['tmp_name'], $uploadDir . $fileName);
-        }
-
-        $stmt = $conn->prepare("INSERT INTO users (FullName, Email, Password, Usertype, Location, JobTitle, CompanyName, ContactNumber, ProfileImagePath) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param("sssssssss", $name, $email, $password, $usertype, $location, $jobTitle, $companyName, $contact, $fileName);
-        
-        if ($stmt->execute()) {
-            $stmt->close();
-            return true;
-        }
-
-        $error = "Database error: " . $stmt->error;
-        $stmt->close();
-        return $error;
+    if (!preg_match("/^[a-zA-Z ]+$/", $name)) {
+        return "Name can only contain letters and spaces.";
     }
+
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        return "Invalid email address.";
+    }
+
+    if (!preg_match("/^\d{11}$/", $contact)) {
+        return "Contact number must be exactly 11 digits.";
+    }
+
+    if (!preg_match("/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/", $passwordRaw)) {
+        return "Password must be at least 8 characters and contain uppercase, lowercase, and a number.";
+    }
+
+    if ($passwordRaw !== $confirm) {
+        return "Password does not match.";
+    }
+
+    $check = $conn->prepare("SELECT UserID FROM users WHERE Email=?");
+    $check->bind_param("s", $email);
+    $check->execute();
+    $check->store_result();
+
+    if ($check->num_rows > 0) {
+        $check->close();
+        return "Email already exists";
+    }
+
+    $check->close();
+
+    $password = password_hash($passwordRaw, PASSWORD_DEFAULT);
+
+    $uploadDir = dirname(__DIR__) . "/uploads/profile_img/";
+    $fileName = null;
+
+    if (!is_dir($uploadDir)) {
+        mkdir($uploadDir, 0777, true);
+    }
+    
+
+    if (isset($_FILES['profile_image']) && $_FILES['profile_image']['error'] === UPLOAD_ERR_OK) {
+
+        $fileName = time() . "_" . preg_replace(
+            '/[^A-Za-z0-9._-]/',
+            '_',
+            basename($_FILES['profile_image']['name'])
+        );
+
+        if (!move_uploaded_file(
+            $_FILES['profile_image']['tmp_name'],
+            $uploadDir . $fileName
+        )) {
+            return "Failed to upload profile image.";
+        }
+    }
+
+    $stmt = $conn->prepare("INSERT INTO users (FullName, Email, Password, Usertype, Location, JobTitle, CompanyName, ContactNumber, ProfileImagePath) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+
+    $stmt->bind_param(
+        "sssssssss",
+        $name,
+        $email,
+        $password,
+        $usertype,
+        $location,
+        $jobTitle,
+        $companyName,
+        $contact,
+        $fileName
+    );
+
+    if ($stmt->execute()) {
+        $stmt->close();
+        return true;
+    }
+
+    $error = "Database error: " . $stmt->error;
+    $stmt->close();
+
+    return $error;
+}
 
     public static function logout()
     {

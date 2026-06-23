@@ -11,7 +11,7 @@ class ApplicationClass
         return $conn;
     }
 
-    public static function apply(int $jobId, int $applicantId, array $file, string $portfolio = ''): true|string 
+    public static function apply(int $jobId, int $applicantId, array $resumeFile, array $coverLetterFile, string $portfolio = ''): true|string 
     {
         $conn = self::getConnection();
 
@@ -31,20 +31,34 @@ class ApplicationClass
             return "You have already applied to this job.";
         }
 
-        if (empty($file['name']) || $file['error'] !== UPLOAD_ERR_OK) {
+        $allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+
+        // --- Resume validation ---
+        if (empty($resumeFile['name']) || $resumeFile['error'] !== UPLOAD_ERR_OK) {
             $conn->close();
             return "A resume file is required.";
         }
-
-        $allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-        if (!in_array($file['type'], $allowedTypes)) {
+        if (!in_array($resumeFile['type'], $allowedTypes)) {
             $conn->close();
             return "Resume must be a PDF or Word document (.pdf, .doc, .docx).";
         }
-
-        if ($file['size'] > 5 * 1024 * 1024) {
+        if ($resumeFile['size'] > 5 * 1024 * 1024) {
             $conn->close();
             return "Resume file must be under 5MB.";
+        }
+
+        // --- Cover letter validation ---
+        if (empty($coverLetterFile['name']) || $coverLetterFile['error'] !== UPLOAD_ERR_OK) {
+            $conn->close();
+            return "A cover letter file is required.";
+        }
+        if (!in_array($coverLetterFile['type'], $allowedTypes)) {
+            $conn->close();
+            return "Cover letter must be a PDF or Word document (.pdf, .doc, .docx).";
+        }
+        if ($coverLetterFile['size'] > 5 * 1024 * 1024) {
+            $conn->close();
+            return "Cover letter file must be under 5MB.";
         }
 
         $jobStmt = $conn->prepare("SELECT Status, EmployerID FROM jobs WHERE JobID = ? LIMIT 1");
@@ -62,18 +76,26 @@ class ApplicationClass
             return "This job is no longer accepting applications.";
         }
 
-        $resumeFileName = time() . '_' . $applicantId . '_' . basename($file['name']);
-        if (!move_uploaded_file($file['tmp_name'], '../uploads/resumes/' . $resumeFileName)) {
+        $resumeFileName = time() . '_' . $applicantId . '_' . basename($resumeFile['name']);
+        if (!move_uploaded_file($resumeFile['tmp_name'], '../uploads/resumes/' . $resumeFileName)) {
             $conn->close();
             return "Failed to upload resume. Please try again.";
         }
 
+        $coverLetterFileName = time() . '_' . $applicantId . '_' . basename($coverLetterFile['name']);
+        if (!move_uploaded_file($coverLetterFile['tmp_name'], '../uploads/coverletter/' . $coverLetterFileName)) {
+            // Roll back the resume that was already saved, since the application as a whole failed
+            @unlink('../uploads/resumes/' . $resumeFileName);
+            $conn->close();
+            return "Failed to upload cover letter. Please try again.";
+        }
+
         $portfolioVal = !empty($portfolio) ? $portfolio : null;
         $stmt = $conn->prepare("
-            INSERT INTO applications (JobID, ApplicantID, EmployerID, ResumePath, PortfolioPath, Status)
-            VALUES (?, ?, ?, ?, ?, 'Pending')
+            INSERT INTO applications (JobID, ApplicantID, EmployerID, ResumePath, PortfolioPath, Status, coverletter)
+            VALUES (?, ?, ?, ?, ?, 'Pending', ?)
         ");
-        $stmt->bind_param("iiiss", $jobId, $applicantId, $job['EmployerID'], $resumeFileName, $portfolioVal);
+        $stmt->bind_param("iiisss", $jobId, $applicantId, $job['EmployerID'], $resumeFileName, $portfolioVal, $coverLetterFileName);
         $success = $stmt->execute();
         
         $stmt->close();
@@ -177,4 +199,3 @@ class ApplicationClass
 
 
 }
-

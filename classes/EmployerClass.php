@@ -286,5 +286,36 @@ class EmployerClass {
             $conn->close();
         }
     }
+
+    public static function updateJob($jobId, $employerId, $data) {
+    $conn = self::getConnection();
+    // Security: Only update if the JobID matches the EmployerID
+    $stmt = $conn->prepare("UPDATE jobs SET 
+        JobTitle = ?, 
+        Description = ?, 
+        Salary = ?, 
+        JobType = ?, 
+        WorkSetup = ?, 
+        ExperienceLevel = ?, 
+        Location = ? 
+        WHERE JobID = ? AND EmployerID = ?");
+    
+    $stmt->bind_param("ssissssii", 
+        $data['title'], 
+        $data['description'], 
+        $data['salary'], 
+        $data['jobType'], 
+        $data['workSetup'], 
+        $data['experienceLevel'], 
+        $data['location'], 
+        $jobId,
+        $employerId
+    );
+    
+    $result = $stmt->execute();
+    $stmt->close();
+    $conn->close();
+    return $result;
+}
 }
 ?>

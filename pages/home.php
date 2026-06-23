@@ -69,7 +69,7 @@ $initials = !empty($user['FullName']) ? strtoupper(substr(trim($user['FullName']
     <li class="nav-item">
         <a class="nav-link d-flex flex-column align-items-center text-center" href="jobs.php">
             <i class="fa fa-briefcase fs-5 mb-1"></i>
-            <span class="nav-label">Application</span>
+            <span class="nav-label">My Application</span>
         </a>
     </li>
 <?php endif; ?>
