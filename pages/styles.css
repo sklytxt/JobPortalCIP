@@ -27,12 +27,12 @@ body {
 
 .login-visual-pane {
   display: none;
-  background: url('../bg_img/background.avif') center center / cover no-repeat;
+  background: url('../uploads/bg_img/background.avif') center center / cover no-repeat;
 }
 
 .register-visual-pane {
   display: none;
-  background: url('../bg_img/background1.jpg') center center / cover no-repeat;
+  background: url('../uploads/bg_img/background1.jpg') center center / cover no-repeat;
 }
 
 @media (min-width: 768px) {
