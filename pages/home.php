@@ -83,7 +83,7 @@ $totalApplications = AuthClass::countUserApplications($current_user_id);
       <?php if (!empty($user['ProfileImagePath']) && file_exists("../uploads/".$user['ProfileImagePath'])): ?>
         <img src="../uploads/<?= htmlspecialchars($user['ProfileImagePath']) ?>" style="width:100%; height:100%; object-fit:cover;">
       <?php else: ?>
-        <span class="text-secondary fw-bold">AR</span>
+        <span class="text-secondary fw-bold">Me</span>
       <?php endif; ?>
     </div>
     
@@ -108,7 +108,6 @@ $totalApplications = AuthClass::countUserApplications($current_user_id);
 
     <div class="row g-4">
 
-      <!-- Left Column -->
       <aside class="col-lg-3">
 
         <div class="card border-0 shadow-sm p-4 mb-4">
@@ -124,7 +123,7 @@ $totalApplications = AuthClass::countUserApplications($current_user_id);
                   background:#f1f1f1;border:1px solid #ddd;
                   display:flex;align-items:center;justify-content:center;
                   margin:0 auto 12px auto;font-weight:600;color:#888;">
-        AR
+        User
       </div>
     <?php endif; ?>
 
@@ -170,7 +169,6 @@ $totalApplications = AuthClass::countUserApplications($current_user_id);
         </div>
 
         <div class="row g-3 mb-4">
-         <!-- delete first if card restored -->
           <div class="col-md-12">
               <div class="card border-0 shadow-sm p-3 text-center">
                   <h3 class="fw-bold text-success mb-1"><?php echo $totalApplications; ?></h3>
@@ -178,71 +176,9 @@ $totalApplications = AuthClass::countUserApplications($current_user_id);
               </div>
           </div>
 
-          <!-- to restor card uncomment -->
-
-          <!-- <div class="col-md-4">
-            <div class="card border-0 shadow-sm p-3 text-center">
-              <h3 class="fw-bold text-success mb-1">12</h3>
-              <p class="small-note mb-0">Applications</p>
-            </div>
-          </div>
-
-          <div class="col-md-4">
-            <div class="card border-0 shadow-sm p-3 text-center">
-              <h3 class="fw-bold text-primary mb-1">3</h3>
-              <p class="small-note mb-0">Interviews</p>
-            </div>
-          </div>
-
-          <div class="col-md-4">
-            <div class="card border-0 shadow-sm p-3 text-center">
-              <h3 class="fw-bold text-warning mb-1">2</h3>
-              <p class="small-note mb-0">Offers</p>
-            </div>
-          </div> -->
 
         </div>
 
-        <div class="card border-0 shadow-sm p-4">
-          <div class="d-flex justify-content-between align-items-center mb-4">
-            <h5 class="fw-bold mb-0">Jobs You've responded to</h5>
-
-            <a href="jobs.php" class="small text-decoration-none">
-              View All
-            </a>
-          </div>
-
-          <div class="border-bottom pb-3 mb-3">
-            <h6 class="mb-1">Frontend Developer</h6>
-            <p class="small-note text-secondary mb-1">
-              TechNova • Quezon City
-            </p>
-            <span class="badge bg-light text-dark">
-              Full-Time
-            </span>
-          </div>
-
-          <div class="border-bottom pb-3 mb-3">
-            <h6 class="mb-1">UI/UX Designer</h6>
-            <p class="small-note text-secondary mb-1">
-              Northstar Product • Remote
-            </p>
-            <span class="badge bg-light text-dark">
-              Remote
-            </span>
-          </div>
-
-          <div>
-            <h6 class="mb-1">Product Designer</h6>
-            <p class="small-note text-secondary mb-1">
-              Clarity Labs • Makati
-            </p>
-            <span class="badge bg-light text-dark">
-              Hybrid
-            </span>
-          </div>
-
-        </div>
 
       </section>
 
